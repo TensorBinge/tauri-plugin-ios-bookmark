@@ -17,7 +17,10 @@ pub async fn read_by_bookmark<R: Runtime>(
 }
 
 #[tauri::command]
-pub async fn forget_bookmark<R: Runtime>(app: AppHandle<R>, id: String) -> Result<(), BookmarkError> {
+pub async fn forget_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    id: String,
+) -> Result<(), BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
     bookmark.forget_bookmark(id).await
 }

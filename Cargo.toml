@@ -4,6 +4,12 @@ version = "0.1.0"
 edition = "2021"
 description = "iOS security-scoped bookmark plugin for Tauri 2"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/TensorBinge/tauri-plugin-ios-bookmark"
+homepage = "https://github.com/TensorBinge/tauri-plugin-ios-bookmark"
+documentation = "https://docs.rs/tauri-plugin-ios-bookmark"
+keywords = ["tauri", "ios", "bookmark", "files", "plugin"]
+categories = ["api-bindings", "os::macos-apis"]
 links = "tauri-plugin-ios-bookmark"
 
 [lib]

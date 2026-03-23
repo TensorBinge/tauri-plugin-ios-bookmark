@@ -1,3 +1,28 @@
+//! iOS security-scoped bookmark plugin for Tauri 2.
+//!
+//! This crate exposes a Tauri plugin that bridges to native iOS code for:
+//! - presenting the Files picker
+//! - creating and storing security-scoped bookmarks
+//! - reading a bookmarked file later
+//! - forgetting a stored bookmark
+//!
+//! The plugin is intended for Tauri mobile apps that target iOS. On unsupported
+//! platforms, initialization falls back to an unsupported implementation.
+//!
+//! # Setup
+//!
+//! Register the plugin in your Tauri application:
+//!
+//! ```rust,ignore
+//! tauri::Builder::default()
+//!     .plugin(tauri_plugin_ios_bookmark::init())
+//!     .run(tauri::generate_context!())
+//!     .expect("error while running tauri application");
+//! ```
+//!
+//! Then call the guest API from JavaScript or TypeScript to pick, read, and
+//! forget bookmarked files.
+
 #[cfg(desktop)]
 mod desktop;
 #[cfg(mobile)]
