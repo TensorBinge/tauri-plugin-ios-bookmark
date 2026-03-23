@@ -1,0 +1,9 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = "Default permissions for the ios-bookmark plugin."
+permissions = [
+  "allow-pick-and-bookmark",
+  "allow-read-by-bookmark",
+  "allow-forget-bookmark",
+]

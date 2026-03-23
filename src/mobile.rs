@@ -1,0 +1,77 @@
+use crate::models::*;
+use serde::de::DeserializeOwned;
+use tauri::{
+    plugin::{PluginApi, PluginHandle},
+    AppHandle, Runtime,
+};
+
+#[cfg(target_os = "ios")]
+tauri::ios_plugin_binding!(init_plugin_ios_bookmark);
+
+pub fn init<R: Runtime, C: DeserializeOwned>(
+    _app: &AppHandle<R>,
+    api: PluginApi<R, C>,
+) -> Result<IosBookmark<R>, BookmarkError> {
+    #[cfg(target_os = "ios")]
+    let handle = api
+        .register_ios_plugin(init_plugin_ios_bookmark)
+        .map_err(|e| BookmarkError::Native(e.to_string()))?;
+
+    // Android is not supported; this plugin is iOS-only.
+    #[cfg(not(target_os = "ios"))]
+    let handle = {
+        let _ = api;
+        return Err(BookmarkError::Unsupported);
+    };
+
+    Ok(IosBookmark(handle))
+}
+
+pub struct IosBookmark<R: Runtime>(PluginHandle<R>);
+
+impl<R: Runtime> IosBookmark<R> {
+    pub async fn pick_and_bookmark(&self) -> Result<PickResult, BookmarkError> {
+        println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> start");
+        self.0
+            .run_mobile_plugin_async("pickAndBookmark", ())
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> error: {e}");
+                BookmarkError::Native(e.to_string())
+            })
+    }
+
+    pub async fn read_by_bookmark(&self, id: String) -> Result<ReadResult, BookmarkError> {
+        println!("[ios-bookmark] rust mobile bridge: readByBookmark({id}) -> start");
+        self.0
+            .run_mobile_plugin_async("readByBookmark", serde_json::json!({ "id": id }))
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: readByBookmark -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: readByBookmark -> error: {e}");
+                BookmarkError::Native(e.to_string())
+            })
+    }
+
+    pub async fn forget_bookmark(&self, id: String) -> Result<(), BookmarkError> {
+        println!("[ios-bookmark] rust mobile bridge: forgetBookmark({id}) -> start");
+        self.0
+            .run_mobile_plugin_async("forgetBookmark", serde_json::json!({ "id": id }))
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: forgetBookmark -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: forgetBookmark -> error: {e}");
+                BookmarkError::Native(e.to_string())
+            })
+    }
+}
