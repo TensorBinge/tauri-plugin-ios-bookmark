@@ -41,10 +41,10 @@ Register the plugin in your Tauri builder:
 
 ```rust
 fn main() {
-        tauri::Builder::default()
-                .plugin(tauri_plugin_ios_bookmark::init())
-                .run(tauri::generate_context!())
-                .expect("error while running tauri application");
+    tauri::Builder::default()
+        .plugin(tauri_plugin_ios_bookmark::init())
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
 ```
 
