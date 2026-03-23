@@ -2,9 +2,45 @@
   "name": "tauri-plugin-ios-bookmark-api",
   "version": "0.1.0",
   "description": "TypeScript API for tauri-plugin-ios-bookmark",
-  "main": "dist/index.js",
+  "license": "MIT",
+  "homepage": "https://github.com/TensorBinge/tauri-plugin-ios-bookmark",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TensorBinge/tauri-plugin-ios-bookmark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TensorBinge/tauri-plugin-ios-bookmark/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "tauri",
+    "ios",
+    "bookmark",
+    "plugin"
+  ],
   "scripts": {
-    "build": "esbuild guest-js/index.ts --bundle --outfile=dist/index.js --format=esm"
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "pack:artifact": "npm run build && node -e \"require('fs').mkdirSync('artifacts', { recursive: true })\" && npm pack --pack-destination artifacts",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "typescript": "^5.8.2"
   }
 }

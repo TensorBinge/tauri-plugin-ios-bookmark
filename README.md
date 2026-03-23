@@ -32,8 +32,13 @@ Add the Rust crate to your Tauri app:
 cargo add tauri-plugin-ios-bookmark
 ```
 
-If you publish the guest API separately or vendor it locally, expose the
-TypeScript functions from `guest-js/index.ts` in your app.
+Install the guest JavaScript API in your frontend package:
+
+```bash
+npm install tauri-plugin-ios-bookmark-api
+```
+
+The guest package expects `@tauri-apps/api` from your Tauri application.
 
 ## Rust Setup
 
@@ -42,9 +47,9 @@ Register the plugin in your Tauri builder:
 ```rust
 fn main() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_ios_bookmark::init())
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    .plugin(tauri_plugin_ios_bookmark::init())
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
 }
 ```
 

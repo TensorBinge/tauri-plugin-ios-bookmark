@@ -2,6 +2,7 @@ target/
 .DS_Store
 dist/
 node_modules/
+artifacts/
 
 ios/.build/
 ios/Packages/
