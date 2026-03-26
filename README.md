@@ -65,10 +65,16 @@ import {
 } from 'tauri-plugin-ios-bookmark-api'
 
 const picked = await pickAndBookmark()
+const targetedPick = await pickAndBookmark({
+    targetPath: '/docs/related.md',
+})
 
 console.log(picked.bookmarkId)
 console.log(picked.fileName)
+console.log(picked.filePath)
 console.log(picked.content)
+
+console.log(targetedPick.bookmarkId)
 
 const reread = await readByBookmark(picked.bookmarkId)
 console.log(reread.fileName)
@@ -80,12 +86,20 @@ await forgetBookmark(picked.bookmarkId)
 `pickAndBookmark()` returns:
 
 ```ts
+type PickBookmarkRequest = {
+    targetPath?: string
+    suggestedFileName?: string
+}
+
 type PickResult = {
     bookmarkId: string
     fileName: string
+    filePath?: string
     content: string
 }
 ```
+
+When `targetPath` is supplied, the plugin performs exact-file validation after the user picks a file. If the selected file does not match the requested target, the command rejects instead of creating a bookmark for the wrong file.
 
 `readByBookmark()` returns:
 
@@ -111,5 +125,6 @@ Available permissions are documented in
 
 - This plugin is iOS-only.
 - The file picker is backed by `UIDocumentPickerViewController`.
+- If `targetPath` is provided, the plugin uses it as best-effort picker context and enforces exact-file validation after selection.
 - Bookmarks are intended for persistent access to user-selected files.
 - On unsupported platforms, initialization returns an unsupported error path.

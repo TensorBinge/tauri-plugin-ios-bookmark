@@ -17,7 +17,10 @@ unsafe impl<R: Runtime> Send for IosBookmark<R> {}
 unsafe impl<R: Runtime> Sync for IosBookmark<R> {}
 
 impl<R: Runtime> IosBookmark<R> {
-    pub async fn pick_and_bookmark(&self) -> Result<PickResult, BookmarkError> {
+    pub async fn pick_and_bookmark(
+        &self,
+        _request: Option<PickBookmarkRequest>,
+    ) -> Result<PickResult, BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 

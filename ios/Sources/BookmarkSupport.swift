@@ -10,6 +10,7 @@ enum BookmarkErrorCode: String {
   case permissionDenied = "PERMISSION_DENIED"
   case ioError = "IO_ERROR"
   case cancelled = "CANCELLED"
+  case targetMismatch = "TARGET_MISMATCH"
   case nativeError = "NATIVE_ERROR"
 }
 

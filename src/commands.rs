@@ -2,9 +2,12 @@ use crate::{models::*, IosBookmark};
 use tauri::{AppHandle, Manager, Runtime};
 
 #[tauri::command]
-pub async fn pick_and_bookmark<R: Runtime>(app: AppHandle<R>) -> Result<PickResult, BookmarkError> {
+pub async fn pick_and_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    request: Option<PickBookmarkRequest>,
+) -> Result<PickResult, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
-    bookmark.pick_and_bookmark().await
+    bookmark.pick_and_bookmark(request).await
 }
 
 #[tauri::command]

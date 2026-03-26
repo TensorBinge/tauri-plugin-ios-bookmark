@@ -3,12 +3,24 @@ import Tauri
 import UIKit
 import UniformTypeIdentifiers
 
+private struct PickBookmarkArgs: Decodable {
+  let request: PickBookmarkRequestDTO?
+}
+
+private struct PickBookmarkRequestDTO: Decodable {
+  let targetPath: String?
+  let suggestedFileName: String?
+}
+
 final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresentationControllerDelegate {
   private var pendingInvoke: Invoke?
+  private var pendingPickRequest: PickBookmarkRequestDTO?
   private let store = BookmarkStore()
 
   @objc public func pickAndBookmark(_ invoke: Invoke) {
     Logger.info("[ios-bookmark] swift plugin: pickAndBookmark entered mainThread=\(Thread.isMainThread)", category: "ios-bookmark")
+
+    let args = (try? invoke.parseArgs(PickBookmarkArgs.self)) ?? PickBookmarkArgs(request: nil)
 
     let presentPicker = {
       Logger.info("[ios-bookmark] swift plugin: pickAndBookmark on main thread", category: "ios-bookmark")
@@ -33,6 +45,12 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
       picker.modalPresentationStyle = .fullScreen
       picker.presentationController?.delegate = self
       self.pendingInvoke = invoke
+      self.pendingPickRequest = args.request
+
+      if let directoryUrl = self.initialDirectoryUrl(for: args.request) {
+        picker.directoryURL = directoryUrl
+      }
+
       Logger.info("[ios-bookmark] swift plugin: presenting UIDocumentPickerViewController", category: "ios-bookmark")
       presenter.present(picker, animated: true, completion: nil)
     }
@@ -56,10 +74,16 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
       return
     }
 
+    if let targetPath = pendingPickRequest?.targetPath,
+       !pathsMatch(selectedUrl: url, targetPath: targetPath) {
+      Logger.error("[ios-bookmark] swift plugin: selected file does not match requested target", category: "ios-bookmark")
+      rejectPendingInvoke(bookmarkError(.targetMismatch, "Selected file does not match requested target"))
+      return
+    }
+
     guard url.startAccessingSecurityScopedResource() else {
       Logger.error("[ios-bookmark] swift plugin: startAccessingSecurityScopedResource failed for \(url)", category: "ios-bookmark")
-      pendingInvoke?.reject("\(bookmarkNativeErrorPrefix):\(BookmarkErrorCode.permissionDenied.rawValue):Failed to access security-scoped resource")
-      pendingInvoke = nil
+      rejectPendingInvoke(bookmarkError(.permissionDenied, "Failed to access security-scoped resource"))
       return
     }
     defer { url.stopAccessingSecurityScopedResource() }
@@ -80,22 +104,21 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
       )
     } catch {
       Logger.error("[ios-bookmark] swift plugin: pickAndBookmark error \(error.localizedDescription)", category: "ios-bookmark")
-      pendingInvoke?.reject(bookmarkRejectMessage(for: error))
+      rejectPendingInvoke(error)
+      return
     }
 
-    pendingInvoke = nil
+    clearPendingPickState()
   }
 
   public func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
     Logger.info("[ios-bookmark] swift plugin: documentPickerWasCancelled", category: "ios-bookmark")
-    pendingInvoke?.reject("\(bookmarkNativeErrorPrefix):\(BookmarkErrorCode.cancelled.rawValue):User cancelled")
-    pendingInvoke = nil
+    rejectPendingInvoke(bookmarkError(.cancelled, "User cancelled"))
   }
 
   public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
     Logger.info("[ios-bookmark] swift plugin: presentationControllerDidDismiss", category: "ios-bookmark")
-    pendingInvoke?.reject("\(bookmarkNativeErrorPrefix):\(BookmarkErrorCode.cancelled.rawValue):Picker dismissed")
-    pendingInvoke = nil
+    rejectPendingInvoke(bookmarkError(.cancelled, "Picker dismissed"))
   }
 
   @objc public func readByBookmark(_ invoke: Invoke) {
@@ -199,5 +222,36 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
       types.append(markdownAlt)
     }
     return Array(Set(types))
+  }
+
+  private func initialDirectoryUrl(for request: PickBookmarkRequestDTO?) -> URL? {
+    guard let targetPath = request?.targetPath else {
+      return nil
+    }
+
+    let directoryPath = (targetPath as NSString).deletingLastPathComponent
+    guard !directoryPath.isEmpty else {
+      return nil
+    }
+
+    return URL(fileURLWithPath: directoryPath, isDirectory: true)
+  }
+
+  private func pathsMatch(selectedUrl: URL, targetPath: String) -> Bool {
+    standardizedPath(for: selectedUrl.path) == standardizedPath(for: targetPath)
+  }
+
+  private func standardizedPath(for path: String) -> String {
+    URL(fileURLWithPath: path).standardizedFileURL.path
+  }
+
+  private func rejectPendingInvoke(_ error: Error) {
+    pendingInvoke?.reject(bookmarkRejectMessage(for: error))
+    clearPendingPickState()
+  }
+
+  private func clearPendingPickState() {
+    pendingInvoke = nil
+    pendingPickRequest = nil
   }
 }

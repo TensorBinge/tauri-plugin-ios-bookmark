@@ -1,5 +1,14 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PickBookmarkRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suggested_file_name: Option<String>,
+}
+
 /// Returned when the user picks a file and a bookmark is created.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,6 +45,8 @@ pub enum BookmarkError {
     Io(String),
     #[error("cancelled")]
     Cancelled,
+    #[error("selected file does not match requested target")]
+    TargetMismatch,
     #[error("native error: {0}")]
     Native(String),
 }

@@ -1,4 +1,4 @@
-use crate::models::*;
+use crate::{models::*, normalize_ios_bookmark_error, pick_and_bookmark_payload};
 use serde::de::DeserializeOwned;
 use tauri::{
     plugin::{PluginApi, PluginHandle},
@@ -30,10 +30,13 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
 pub struct IosBookmark<R: Runtime>(PluginHandle<R>);
 
 impl<R: Runtime> IosBookmark<R> {
-    pub async fn pick_and_bookmark(&self) -> Result<PickResult, BookmarkError> {
+    pub async fn pick_and_bookmark(
+        &self,
+        request: Option<PickBookmarkRequest>,
+    ) -> Result<PickResult, BookmarkError> {
         println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> start");
         self.0
-            .run_mobile_plugin_async("pickAndBookmark", ())
+            .run_mobile_plugin_async("pickAndBookmark", pick_and_bookmark_payload(request))
             .await
             .map(|result| {
                 println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> resolved");
@@ -41,7 +44,7 @@ impl<R: Runtime> IosBookmark<R> {
             })
             .map_err(|e| {
                 println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> error: {e}");
-                BookmarkError::Native(e.to_string())
+                normalize_ios_bookmark_error(e.to_string())
             })
     }
 
@@ -56,7 +59,7 @@ impl<R: Runtime> IosBookmark<R> {
             })
             .map_err(|e| {
                 println!("[ios-bookmark] rust mobile bridge: readByBookmark -> error: {e}");
-                BookmarkError::Native(e.to_string())
+                normalize_ios_bookmark_error(e.to_string())
             })
     }
 
@@ -71,7 +74,7 @@ impl<R: Runtime> IosBookmark<R> {
             })
             .map_err(|e| {
                 println!("[ios-bookmark] rust mobile bridge: forgetBookmark -> error: {e}");
-                BookmarkError::Native(e.to_string())
+                normalize_ios_bookmark_error(e.to_string())
             })
     }
 }

@@ -29,9 +29,13 @@ mod desktop;
 mod mobile;
 
 mod commands;
+mod error_bridge;
 mod models;
+mod payloads;
 
+pub use error_bridge::normalize_ios_bookmark_error;
 pub use models::*;
+pub use payloads::pick_and_bookmark_payload;
 
 #[cfg(desktop)]
 pub(crate) use desktop::IosBookmark;

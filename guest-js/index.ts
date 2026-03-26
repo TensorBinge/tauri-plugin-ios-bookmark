@@ -1,8 +1,14 @@
 import { invoke } from '@tauri-apps/api/core'
 
+export interface PickBookmarkRequest {
+  targetPath?: string
+  suggestedFileName?: string
+}
+
 export interface PickResult {
   bookmarkId: string
   fileName: string
+  filePath?: string
   content: string
 }
 
@@ -11,8 +17,10 @@ export interface ReadResult {
   content: string
 }
 
-export async function pickAndBookmark(): Promise<PickResult> {
-  return invoke<PickResult>('plugin:ios-bookmark|pick_and_bookmark')
+export async function pickAndBookmark(request?: PickBookmarkRequest): Promise<PickResult> {
+  return request === undefined
+    ? invoke<PickResult>('plugin:ios-bookmark|pick_and_bookmark')
+    : invoke<PickResult>('plugin:ios-bookmark|pick_and_bookmark', { request })
 }
 
 export async function readByBookmark(id: string): Promise<ReadResult> {
