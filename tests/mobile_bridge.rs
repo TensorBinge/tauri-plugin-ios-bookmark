@@ -1,9 +1,6 @@
 use serde_json::json;
 use tauri_plugin_ios_bookmark::{
-    normalize_ios_bookmark_error,
-    pick_and_bookmark_payload,
-    BookmarkError,
-    PickBookmarkRequest,
+    normalize_ios_bookmark_error, pick_and_bookmark_payload, BookmarkError, PickBookmarkRequest,
 };
 
 #[test]
