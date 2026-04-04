@@ -1,6 +1,6 @@
 {
   "name": "tauri-plugin-ios-bookmark-api",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "TypeScript API for tauri-plugin-ios-bookmark",
   "license": "MIT",
   "homepage": "https://github.com/TensorBinge/tauri-plugin-ios-bookmark",
