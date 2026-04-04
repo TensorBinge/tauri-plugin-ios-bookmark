@@ -24,7 +24,22 @@ impl<R: Runtime> IosBookmark<R> {
         Err(BookmarkError::Unsupported)
     }
 
+    pub async fn pick_folder_and_bookmark(
+        &self,
+        _request: Option<PickFolderBookmarkRequest>,
+    ) -> Result<PickFolderResult, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
     pub async fn read_by_bookmark(&self, _id: String) -> Result<ReadResult, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn read_by_folder_bookmark(
+        &self,
+        _id: String,
+        _target_path: String,
+    ) -> Result<ReadResult, BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 

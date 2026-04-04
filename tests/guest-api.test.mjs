@@ -21,7 +21,9 @@ beforeEach(() => {
 
 test('exports the guest API functions', () => {
   assert.equal(typeof api.pickAndBookmark, 'function')
+  assert.equal(typeof api.pickFolderAndBookmark, 'function')
   assert.equal(typeof api.readByBookmark, 'function')
+  assert.equal(typeof api.readByFolderBookmark, 'function')
   assert.equal(typeof api.forgetBookmark, 'function')
 })
 
@@ -62,6 +64,49 @@ test('pickAndBookmark forwards an explicit target-path request payload', async (
       request: {
         targetPath: '/docs/related.md',
       },
+    },
+    undefined,
+  ]])
+})
+
+test('pickFolderAndBookmark forwards an explicit target-path request payload', async () => {
+  invokeResult = {
+    bookmarkId: 'folder-123',
+    folderName: 'docs',
+    folderPath: '/docs',
+  }
+
+  const result = await api.pickFolderAndBookmark({
+    targetPath: '/docs',
+  })
+
+  assert.deepEqual(result, invokeResult)
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|pick_folder_and_bookmark',
+    {
+      request: {
+        targetPath: '/docs',
+      },
+    },
+    undefined,
+  ]])
+})
+
+test('readByFolderBookmark forwards the folder bookmark id and target path', async () => {
+  invokeResult = {
+    fileName: 'related.md',
+    filePath: '/docs/related.md',
+    content: '# Related',
+  }
+
+  const result = await api.readByFolderBookmark('folder-123', '/docs/related.md')
+
+  assert.deepEqual(result, invokeResult)
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|read_by_folder_bookmark',
+    {
+      id: 'folder-123',
+      targetPath: '/docs/related.md',
     },
     undefined,
   ]])

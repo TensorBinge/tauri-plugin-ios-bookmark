@@ -1,4 +1,7 @@
-use crate::{models::*, normalize_ios_bookmark_error, pick_and_bookmark_payload};
+use crate::{
+    models::*, normalize_ios_bookmark_error, pick_and_bookmark_payload,
+    pick_folder_and_bookmark_payload,
+};
 use serde::de::DeserializeOwned;
 use tauri::{
     plugin::{PluginApi, PluginHandle},
@@ -48,6 +51,24 @@ impl<R: Runtime> IosBookmark<R> {
             })
     }
 
+    pub async fn pick_folder_and_bookmark(
+        &self,
+        request: Option<PickFolderBookmarkRequest>,
+    ) -> Result<PickFolderResult, BookmarkError> {
+        println!("[ios-bookmark] rust mobile bridge: pickFolderAndBookmark -> start");
+        self.0
+            .run_mobile_plugin_async("pickFolderAndBookmark", pick_folder_and_bookmark_payload(request))
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: pickFolderAndBookmark -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: pickFolderAndBookmark -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
     pub async fn read_by_bookmark(&self, id: String) -> Result<ReadResult, BookmarkError> {
         println!("[ios-bookmark] rust mobile bridge: readByBookmark({id}) -> start");
         self.0
@@ -59,6 +80,28 @@ impl<R: Runtime> IosBookmark<R> {
             })
             .map_err(|e| {
                 println!("[ios-bookmark] rust mobile bridge: readByBookmark -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
+    pub async fn read_by_folder_bookmark(
+        &self,
+        id: String,
+        target_path: String,
+    ) -> Result<ReadResult, BookmarkError> {
+        println!("[ios-bookmark] rust mobile bridge: readByFolderBookmark({id}, {target_path}) -> start");
+        self.0
+            .run_mobile_plugin_async(
+                "readByFolderBookmark",
+                serde_json::json!({ "id": id, "targetPath": target_path }),
+            )
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: readByFolderBookmark -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: readByFolderBookmark -> error: {e}");
                 normalize_ios_bookmark_error(e.to_string())
             })
     }

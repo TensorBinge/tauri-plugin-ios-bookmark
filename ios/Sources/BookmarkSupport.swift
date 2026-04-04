@@ -54,8 +54,15 @@ struct PickResultDTO: Encodable {
   let content: String
 }
 
+struct PickFolderResultDTO: Encodable {
+  let bookmarkId: String
+  let folderName: String
+  let folderPath: String
+}
+
 struct ReadResultDTO: Encodable {
   let fileName: String
+  let filePath: String
   let content: String
 }
 

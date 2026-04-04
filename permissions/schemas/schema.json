@@ -319,6 +319,18 @@
           "markdownDescription": "Denies the pick_and_bookmark command without any pre-configured scope."
         },
         {
+          "description": "Enables the pick_folder_and_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-pick-folder-and-bookmark",
+          "markdownDescription": "Enables the pick_folder_and_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the pick_folder_and_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-pick-folder-and-bookmark",
+          "markdownDescription": "Denies the pick_folder_and_bookmark command without any pre-configured scope."
+        },
+        {
           "description": "Enables the read_by_bookmark command without any pre-configured scope.",
           "type": "string",
           "const": "allow-read-by-bookmark",
@@ -331,10 +343,22 @@
           "markdownDescription": "Denies the read_by_bookmark command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-forget-bookmark`",
+          "description": "Enables the read_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-read-by-folder-bookmark",
+          "markdownDescription": "Enables the read_by_folder_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-read-by-folder-bookmark",
+          "markdownDescription": "Denies the read_by_folder_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-forget-bookmark`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-forget-bookmark`"
+          "markdownDescription": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-forget-bookmark`"
         }
       ]
     }
