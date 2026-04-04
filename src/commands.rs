@@ -41,7 +41,9 @@ pub async fn read_by_folder_bookmark<R: Runtime>(
     args: ReadByFolderBookmarkArgs,
 ) -> Result<ReadResult, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
-    bookmark.read_by_folder_bookmark(args.id, args.target_path).await
+    bookmark
+        .read_by_folder_bookmark(args.id, args.target_path)
+        .await
 }
 
 #[tauri::command]
