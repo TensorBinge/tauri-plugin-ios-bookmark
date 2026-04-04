@@ -26,7 +26,10 @@ fn pick_and_bookmark_payload_wraps_request_when_target_path_is_present() {
 
 #[test]
 fn pick_folder_and_bookmark_payload_uses_null_for_no_request() {
-    assert_eq!(pick_folder_and_bookmark_payload(None), serde_json::Value::Null);
+    assert_eq!(
+        pick_folder_and_bookmark_payload(None),
+        serde_json::Value::Null
+    );
 }
 
 #[test]
