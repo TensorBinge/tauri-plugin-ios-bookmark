@@ -45,7 +45,7 @@ export async function pickFolderAndBookmark(request?: PickFolderBookmarkRequest)
 }
 
 export async function readByFolderBookmark(id: string, targetPath: string): Promise<ReadResult> {
-  return invoke<ReadResult>('plugin:ios-bookmark|read_by_folder_bookmark', { id, targetPath })
+  return invoke<ReadResult>('plugin:ios-bookmark|read_by_folder_bookmark', { args: { id, targetPath } })
 }
 
 export async function forgetBookmark(id: string): Promise<void> {

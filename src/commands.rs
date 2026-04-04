@@ -28,14 +28,20 @@ pub async fn read_by_bookmark<R: Runtime>(
     bookmark.read_by_bookmark(id).await
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReadByFolderBookmarkArgs {
+    pub id: String,
+    pub target_path: String,
+}
+
 #[tauri::command]
 pub async fn read_by_folder_bookmark<R: Runtime>(
     app: AppHandle<R>,
-    id: String,
-    target_path: String,
+    args: ReadByFolderBookmarkArgs,
 ) -> Result<ReadResult, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
-    bookmark.read_by_folder_bookmark(id, target_path).await
+    bookmark.read_by_folder_bookmark(args.id, args.target_path).await
 }
 
 #[tauri::command]

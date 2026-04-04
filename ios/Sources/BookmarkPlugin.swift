@@ -184,7 +184,16 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
         store.updateFolder(id: args.id, bookmarkData: refreshedBookmark, folderName: refreshedName)
       }
 
-      let targetUrl = URL(fileURLWithPath: args.targetPath)
+      let targetUrl = URL(fileURLWithPath: args.targetPath).resolvingSymlinksInPath()
+      let resolvedFolderPath = folderUrl.resolvingSymlinksInPath().path
+      let normalizedTarget = normalizeIosScopedPath(targetUrl.path)
+      let normalizedFolder = normalizeIosScopedPath(resolvedFolderPath)
+      guard resolvedPathIsWithinFolder(normalizedTarget, folder: normalizedFolder) else {
+        throw bookmarkError(
+          .permissionDenied,
+          "Resolved path '\(normalizedTarget)' is outside the bookmarked folder '\(normalizedFolder)'"
+        )
+      }
       let content = try coordinatedRead(url: targetUrl)
       Logger.info("[ios-bookmark] swift plugin: readByFolderBookmark resolved for \(targetUrl.lastPathComponent)", category: "ios-bookmark")
       invoke.resolve(ReadResultDTO(fileName: targetUrl.lastPathComponent, filePath: targetUrl.path, content: content))
@@ -422,13 +431,19 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
   }
 
   private func urlIsWithinFolder(targetPath: String, folderPath: String) -> Bool {
-    let normalizedTarget = standardizedPath(for: targetPath)
-    let normalizedFolder = standardizedPath(for: folderPath)
+    let normalizedTarget = normalizeIosScopedPath(
+      URL(fileURLWithPath: targetPath).resolvingSymlinksInPath().path
+    )
+    let normalizedFolder = normalizeIosScopedPath(
+      URL(fileURLWithPath: folderPath).resolvingSymlinksInPath().path
+    )
+    return resolvedPathIsWithinFolder(normalizedTarget, folder: normalizedFolder)
+  }
 
+  private func resolvedPathIsWithinFolder(_ normalizedTarget: String, folder normalizedFolder: String) -> Bool {
     if normalizedFolder == "/" {
       return normalizedTarget.hasPrefix("/")
     }
-
     return normalizedTarget == normalizedFolder || normalizedTarget.hasPrefix(normalizedFolder + "/")
   }
 

@@ -69,6 +69,23 @@ test('pickAndBookmark forwards an explicit target-path request payload', async (
   ]])
 })
 
+test('pickFolderAndBookmark invokes the plugin command without a request payload by default', async () => {
+  invokeResult = {
+    bookmarkId: 'folder-456',
+    folderName: 'docs',
+    folderPath: '/docs',
+  }
+
+  const result = await api.pickFolderAndBookmark()
+
+  assert.deepEqual(result, invokeResult)
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|pick_folder_and_bookmark',
+    {},
+    undefined,
+  ]])
+})
+
 test('pickFolderAndBookmark forwards an explicit target-path request payload', async () => {
   invokeResult = {
     bookmarkId: 'folder-123',
@@ -105,8 +122,10 @@ test('readByFolderBookmark forwards the folder bookmark id and target path', asy
   assert.deepEqual(invokeCalls, [[
     'plugin:ios-bookmark|read_by_folder_bookmark',
     {
-      id: 'folder-123',
-      targetPath: '/docs/related.md',
+      args: {
+        id: 'folder-123',
+        targetPath: '/docs/related.md',
+      },
     },
     undefined,
   ]])
