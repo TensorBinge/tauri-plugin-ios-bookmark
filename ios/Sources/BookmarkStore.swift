@@ -14,6 +14,13 @@ final class BookmarkStore {
     defaults.set(fileName, forKey: prefix + "name." + id)
     return id
   }
+  
+  func saveFolder(bookmarkData: Data, folderName: String) -> String {
+    let id = UUID().uuidString
+    defaults.set(bookmarkData, forKey: prefix + "data." + id)
+    defaults.set(folderName, forKey: prefix + "name." + id)
+    return id
+  }
 
   func getBookmarkData(id: String) -> Data? {
     defaults.data(forKey: prefix + "data." + id)
@@ -21,6 +28,13 @@ final class BookmarkStore {
 
   func getFileName(id: String) -> String? {
     defaults.string(forKey: prefix + "name." + id)
+  }
+
+  func updateFolder(id: String, bookmarkData: Data, folderName: String?) {
+    defaults.set(bookmarkData, forKey: prefix + "data." + id)
+    if let folderName {
+      defaults.set(folderName, forKey: prefix + "name." + id)
+    }
   }
 
   func update(id: String, bookmarkData: Data, fileName: String?) {
