@@ -267,42 +267,6 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     }
 
     clearPendingPickState()
-
-    if let targetPath = pendingPickRequest?.targetPath,
-       !pathsMatch(selectedUrl: url, targetPath: targetPath) {
-      Logger.error("[ios-bookmark] swift plugin: selected file does not match requested target", category: "ios-bookmark")
-      rejectPendingInvoke(bookmarkError(.targetMismatch, "Selected file does not match requested target"))
-      return
-    }
-
-    guard url.startAccessingSecurityScopedResource() else {
-      Logger.error("[ios-bookmark] swift plugin: startAccessingSecurityScopedResource failed for \(url)", category: "ios-bookmark")
-      rejectPendingInvoke(bookmarkError(.permissionDenied, "Failed to access security-scoped resource"))
-      return
-    }
-    defer { url.stopAccessingSecurityScopedResource() }
-
-    do {
-      let bookmarkData = try url.bookmarkData(
-        options: [],
-        includingResourceValuesForKeys: nil,
-        relativeTo: nil
-      )
-      let fileName = url.lastPathComponent
-      let content = try coordinatedRead(url: url)
-      let id = store.save(bookmarkData: bookmarkData, fileName: fileName)
-      Logger.info("[ios-bookmark] swift plugin: resolving pickAndBookmark for \(fileName)", category: "ios-bookmark")
-
-      pendingInvoke?.resolve(
-        PickResultDTO(bookmarkId: id, fileName: fileName, filePath: url.path, content: content)
-      )
-    } catch {
-      Logger.error("[ios-bookmark] swift plugin: pickAndBookmark error \(error.localizedDescription)", category: "ios-bookmark")
-      rejectPendingInvoke(error)
-      return
-    }
-
-    clearPendingPickState()
   }
 
   public func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
@@ -444,7 +408,17 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
   }
 
   private func standardizedPath(for path: String) -> String {
-    URL(fileURLWithPath: path).standardizedFileURL.path
+    normalizeIosScopedPath(URL(fileURLWithPath: path).standardizedFileURL.path)
+  }
+
+  private func normalizeIosScopedPath(_ path: String) -> String {
+    let normalizedPath = path == "/" ? path : path.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
+
+    guard normalizedPath.hasPrefix("/private/var/") else {
+      return normalizedPath
+    }
+
+    return String(normalizedPath.dropFirst("/private".count))
   }
 
   private func urlIsWithinFolder(targetPath: String, folderPath: String) -> Bool {
