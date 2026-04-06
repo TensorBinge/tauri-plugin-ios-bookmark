@@ -47,6 +47,11 @@ use tauri::{
     Manager, Runtime,
 };
 
+/// Registers the iOS bookmark plugin and stores its runtime handle in managed state.
+///
+/// The resulting state is consumed by the Tauri commands in `commands.rs`, which
+/// keeps the JavaScript-facing command surface small while allowing the platform-
+/// specific implementation to live behind `IosBookmark`.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("ios-bookmark")
         .invoke_handler(tauri::generate_handler![
@@ -61,6 +66,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             let bookmark = mobile::init(app, api)?;
             #[cfg(desktop)]
             let bookmark = desktop::init(app, api)?;
+
+            // Expose a single managed handle so every command shares the same plugin instance.
             app.manage(bookmark);
             Ok(())
         })

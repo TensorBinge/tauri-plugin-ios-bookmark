@@ -1,6 +1,13 @@
+//! Tauri command handlers for the iOS bookmark plugin.
+//!
+//! These functions are intentionally thin wrappers around the managed
+//! `IosBookmark` state so the public command surface stays declarative and the
+//! platform-specific work remains inside the mobile/desktop implementations.
+
 use crate::{models::*, IosBookmark};
 use tauri::{AppHandle, Manager, Runtime};
 
+/// Opens the native file picker and returns a bookmark-backed file result.
 #[tauri::command]
 pub async fn pick_and_bookmark<R: Runtime>(
     app: AppHandle<R>,
@@ -10,6 +17,7 @@ pub async fn pick_and_bookmark<R: Runtime>(
     bookmark.pick_and_bookmark(request).await
 }
 
+/// Opens the native folder picker and returns a bookmark-backed folder result.
 #[tauri::command]
 pub async fn pick_folder_and_bookmark<R: Runtime>(
     app: AppHandle<R>,
@@ -19,6 +27,7 @@ pub async fn pick_folder_and_bookmark<R: Runtime>(
     bookmark.pick_folder_and_bookmark(request).await
 }
 
+/// Reads the content of a file previously authorized by a direct bookmark.
 #[tauri::command]
 pub async fn read_by_bookmark<R: Runtime>(
     app: AppHandle<R>,
@@ -28,6 +37,10 @@ pub async fn read_by_bookmark<R: Runtime>(
     bookmark.read_by_bookmark(id).await
 }
 
+/// Argument object used for the folder-bookmark read command.
+///
+/// A named struct keeps the Tauri command boundary aligned with the camelCase
+/// payload shape expected by the generated guest API.
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadByFolderBookmarkArgs {
@@ -35,6 +48,7 @@ pub struct ReadByFolderBookmarkArgs {
     pub target_path: String,
 }
 
+/// Reads a file within a previously authorized folder scope.
 #[tauri::command]
 pub async fn read_by_folder_bookmark<R: Runtime>(
     app: AppHandle<R>,
@@ -46,6 +60,7 @@ pub async fn read_by_folder_bookmark<R: Runtime>(
         .await
 }
 
+/// Forgets a stored bookmark and releases the corresponding native grant.
 #[tauri::command]
 pub async fn forget_bookmark<R: Runtime>(
     app: AppHandle<R>,
