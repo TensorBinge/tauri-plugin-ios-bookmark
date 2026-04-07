@@ -1,5 +1,8 @@
+#if os(iOS)
 import Foundation
+#if os(iOS)
 import Tauri
+#endif
 import UIKit
 import UniformTypeIdentifiers
 
@@ -23,6 +26,26 @@ private struct PickFolderBookmarkRequestDTO: Decodable {
 private enum PendingPickerKind {
   case file
   case folder
+  case export
+}
+
+private final class PdfPrintPageRenderer: UIPrintPageRenderer {
+  private let exportPaperRect: CGRect
+  private let exportPrintableRect: CGRect
+
+  init(paperRect: CGRect, printableRect: CGRect) {
+    self.exportPaperRect = paperRect
+    self.exportPrintableRect = printableRect
+    super.init()
+  }
+
+  override var paperRect: CGRect {
+    exportPaperRect
+  }
+
+  override var printableRect: CGRect {
+    exportPrintableRect
+  }
 }
 
 final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresentationControllerDelegate {
@@ -30,6 +53,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
   private var pendingPickRequest: PickBookmarkRequestDTO?
   private var pendingFolderPickRequest: PickFolderBookmarkRequestDTO?
   private var pendingPickerKind: PendingPickerKind?
+  private var pendingExportUrl: URL?
   private let store = BookmarkStore()
 
   @objc public func pickAndBookmark(_ invoke: Invoke) {
@@ -51,14 +75,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
         return
       }
 
-      let picker = UIDocumentPickerViewController(
-        forOpeningContentTypes: self.markdownTypes(),
-        asCopy: false
-      )
-      picker.delegate = self
-      picker.allowsMultipleSelection = false
-      picker.modalPresentationStyle = .fullScreen
-      picker.presentationController?.delegate = self
+      let picker = self.makeFilePicker()
       self.pendingInvoke = invoke
       self.pendingPickRequest = args.request
       self.pendingPickerKind = .file
@@ -97,14 +114,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
         return
       }
 
-      let picker = UIDocumentPickerViewController(
-        forOpeningContentTypes: [.folder],
-        asCopy: false
-      )
-      picker.delegate = self
-      picker.allowsMultipleSelection = false
-      picker.modalPresentationStyle = .fullScreen
-      picker.presentationController?.delegate = self
+      let picker = self.makeFolderPicker()
       self.pendingInvoke = invoke
       self.pendingFolderPickRequest = args.request
       self.pendingPickerKind = .folder
@@ -115,6 +125,98 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
 
       Logger.info("[ios-bookmark] swift plugin: presenting folder UIDocumentPickerViewController", category: "ios-bookmark")
       presenter.present(picker, animated: true, completion: nil)
+    }
+
+    if Thread.isMainThread {
+      presentPicker()
+    } else {
+      DispatchQueue.main.async(execute: presentPicker)
+    }
+  }
+
+  @objc public func exportFile(_ invoke: Invoke) {
+    Logger.info("[ios-bookmark] swift plugin: exportFile entered mainThread=\(Thread.isMainThread)", category: "ios-bookmark")
+
+    struct Args: Decodable {
+      let path: String
+    }
+
+    let presentPicker = {
+      Logger.info("[ios-bookmark] swift plugin: exportFile on main thread", category: "ios-bookmark")
+      guard let presenter = self.manager.viewController else {
+        Logger.error("[ios-bookmark] swift plugin: no active view controller", category: "ios-bookmark")
+        invoke.reject("\(bookmarkNativeErrorPrefix):\(BookmarkErrorCode.nativeError.rawValue):No active view controller")
+        return
+      }
+
+      guard self.pendingInvoke == nil else {
+        Logger.error("[ios-bookmark] swift plugin: picker already in progress", category: "ios-bookmark")
+        invoke.reject("\(bookmarkNativeErrorPrefix):\(BookmarkErrorCode.nativeError.rawValue):Picker already in progress")
+        return
+      }
+
+      do {
+        let args = try invoke.parseArgs(Args.self)
+        let fileUrl = URL(fileURLWithPath: args.path)
+        Logger.info("[ios-bookmark] swift plugin: exportFile parsed path=\(fileUrl.path)", category: "ios-bookmark")
+        Logger.info("[ios-bookmark] swift plugin: exportFile fileExists=\(FileManager.default.fileExists(atPath: fileUrl.path))", category: "ios-bookmark")
+        guard FileManager.default.fileExists(atPath: fileUrl.path) else {
+          throw bookmarkError(.notFound, "Export file not found")
+        }
+
+        Logger.info("[ios-bookmark] swift plugin: exportFile presenter=\(String(describing: type(of: presenter))) pendingInvoke=\(self.pendingInvoke != nil)", category: "ios-bookmark")
+
+        let picker: UIDocumentPickerViewController
+        if #available(iOS 14.0, *) {
+          Logger.info("[ios-bookmark] swift plugin: exportFile creating iOS14+ export picker", category: "ios-bookmark")
+          picker = UIDocumentPickerViewController(forExporting: [fileUrl], asCopy: true)
+        } else {
+          Logger.info("[ios-bookmark] swift plugin: exportFile creating legacy export picker", category: "ios-bookmark")
+          picker = UIDocumentPickerViewController(url: fileUrl, in: .exportToService)
+        }
+
+        self.pendingInvoke = invoke
+        self.pendingPickerKind = .export
+        self.pendingExportUrl = fileUrl
+
+        Logger.info("[ios-bookmark] swift plugin: presenting export UIDocumentPickerViewController", category: "ios-bookmark")
+        presenter.present(self.configurePicker(picker), animated: true) {
+          Logger.info("[ios-bookmark] swift plugin: export UIDocumentPickerViewController present completion", category: "ios-bookmark")
+        }
+      } catch {
+        Logger.error("[ios-bookmark] swift plugin: exportFile error \(error.localizedDescription)", category: "ios-bookmark")
+        invoke.reject(bookmarkRejectMessage(for: error))
+      }
+    }
+
+    if Thread.isMainThread {
+      presentPicker()
+    } else {
+      DispatchQueue.main.async(execute: presentPicker)
+    }
+  }
+
+  @objc public func exportPdf(_ invoke: Invoke) {
+    Logger.info("[ios-bookmark] swift plugin: exportPdf entered mainThread=\(Thread.isMainThread)", category: "ios-bookmark")
+
+    struct Args: Decodable {
+      let fileName: String
+      let html: String
+    }
+
+    let presentPicker = {
+      Logger.info("[ios-bookmark] swift plugin: exportPdf on main thread", category: "ios-bookmark")
+
+      do {
+        let args = try invoke.parseArgs(Args.self)
+        Logger.info("[ios-bookmark] swift plugin: exportPdf parsed fileName=\(args.fileName) htmlLength=\(args.html.count)", category: "ios-bookmark")
+        let fileUrl = try self.renderPdfExportFile(fileName: args.fileName, html: args.html)
+        Logger.info("[ios-bookmark] swift plugin: exportPdf rendered temp file at \(fileUrl.path)", category: "ios-bookmark")
+        try self.presentExportPicker(fileUrl: fileUrl, invoke: invoke)
+      } catch {
+        Logger.error("[ios-bookmark] swift plugin: exportPdf error \(error.localizedDescription)", category: "ios-bookmark")
+        invoke.reject(bookmarkRejectMessage(for: error))
+      }
     }
 
     if Thread.isMainThread {
@@ -137,6 +239,8 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     }
 
     switch pendingPickerKind {
+    case .export:
+      resolveExport(urls.first)
     case .folder:
       resolvePickedFolder(url)
     case .file, .none:
@@ -278,6 +382,79 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     clearPendingPickState()
   }
 
+  private func resolveExport(_ url: URL?) {
+    if let url {
+      Logger.info("[ios-bookmark] swift plugin: exportFile completed to \(url.path)", category: "ios-bookmark")
+    } else {
+      Logger.info("[ios-bookmark] swift plugin: exportFile completed without a destination callback url", category: "ios-bookmark")
+    }
+
+    pendingInvoke?.resolve()
+    clearPendingPickState()
+  }
+
+  private func renderPdfExportFile(fileName: String, html: String) throws -> URL {
+    let sanitizedFileName = try sanitizeExportFileName(fileName, expectedExtension: "pdf")
+    let fileUrl = try makeTemporaryExportUrl(fileName: sanitizedFileName)
+    let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8)
+    let printableRect = pageRect.insetBy(dx: 24, dy: 24)
+    let renderer = PdfPrintPageRenderer(paperRect: pageRect, printableRect: printableRect)
+    let formatter = UIMarkupTextPrintFormatter(markupText: html)
+
+    renderer.addPrintFormatter(formatter, startingAtPageAt: 0)
+
+    let pageCount = max(renderer.numberOfPages, 1)
+    let pdfData = NSMutableData()
+    UIGraphicsBeginPDFContextToData(pdfData, pageRect, nil)
+
+    for pageIndex in 0..<pageCount {
+      UIGraphicsBeginPDFPageWithInfo(pageRect, nil)
+      renderer.drawPage(at: pageIndex, in: pageRect)
+    }
+
+    UIGraphicsEndPDFContext()
+    try pdfData.write(to: fileUrl, options: .atomic)
+    return fileUrl
+  }
+
+  private func presentExportPicker(fileUrl: URL, invoke: Invoke) throws {
+    guard let presenter = self.manager.viewController else {
+      Logger.error("[ios-bookmark] swift plugin: no active view controller", category: "ios-bookmark")
+      throw bookmarkError(.nativeError, "No active view controller")
+    }
+
+    guard self.pendingInvoke == nil else {
+      Logger.error("[ios-bookmark] swift plugin: picker already in progress", category: "ios-bookmark")
+      throw bookmarkError(.nativeError, "Picker already in progress")
+    }
+
+    Logger.info("[ios-bookmark] swift plugin: exportFile parsed path=\(fileUrl.path)", category: "ios-bookmark")
+    Logger.info("[ios-bookmark] swift plugin: exportFile fileExists=\(FileManager.default.fileExists(atPath: fileUrl.path))", category: "ios-bookmark")
+    guard FileManager.default.fileExists(atPath: fileUrl.path) else {
+      throw bookmarkError(.notFound, "Export file not found")
+    }
+
+    Logger.info("[ios-bookmark] swift plugin: exportFile presenter=\(String(describing: type(of: presenter))) pendingInvoke=\(self.pendingInvoke != nil)", category: "ios-bookmark")
+
+    let picker: UIDocumentPickerViewController
+    if #available(iOS 14.0, *) {
+      Logger.info("[ios-bookmark] swift plugin: exportFile creating iOS14+ export picker", category: "ios-bookmark")
+      picker = UIDocumentPickerViewController(forExporting: [fileUrl], asCopy: true)
+    } else {
+      Logger.info("[ios-bookmark] swift plugin: exportFile creating legacy export picker", category: "ios-bookmark")
+      picker = UIDocumentPickerViewController(url: fileUrl, in: .exportToService)
+    }
+
+    self.pendingInvoke = invoke
+    self.pendingPickerKind = .export
+    self.pendingExportUrl = fileUrl
+
+    Logger.info("[ios-bookmark] swift plugin: presenting export UIDocumentPickerViewController", category: "ios-bookmark")
+    presenter.present(self.configurePicker(picker), animated: true) {
+      Logger.info("[ios-bookmark] swift plugin: export UIDocumentPickerViewController present completion", category: "ios-bookmark")
+    }
+  }
+
   public func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
     Logger.info("[ios-bookmark] swift plugin: documentPickerWasCancelled", category: "ios-bookmark")
     rejectPendingInvoke(bookmarkError(.cancelled, "User cancelled"))
@@ -380,6 +557,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     return content
   }
 
+  @available(iOS 14.0, *)
   private func markdownTypes() -> [UTType] {
     var types: [UTType] = [.plainText, .text]
     if let markdown = UTType(filenameExtension: "md") {
@@ -389,6 +567,78 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
       types.append(markdownAlt)
     }
     return Array(Set(types))
+  }
+
+  private func legacyMarkdownTypeIdentifiers() -> [String] {
+    Array(Set([
+      "public.plain-text",
+      "public.text",
+      "net.daringfireball.markdown",
+      "public.content",
+    ]))
+  }
+
+  private func legacyFolderTypeIdentifiers() -> [String] {
+    ["public.folder"]
+  }
+
+  private func makeFilePicker() -> UIDocumentPickerViewController {
+    let picker: UIDocumentPickerViewController
+
+    if #available(iOS 14.0, *) {
+      picker = UIDocumentPickerViewController(
+        forOpeningContentTypes: markdownTypes(),
+        asCopy: false
+      )
+    } else {
+      picker = UIDocumentPickerViewController(documentTypes: legacyMarkdownTypeIdentifiers(), in: .open)
+    }
+
+    return configurePicker(picker)
+  }
+
+  private func makeFolderPicker() -> UIDocumentPickerViewController {
+    let picker: UIDocumentPickerViewController
+
+    if #available(iOS 14.0, *) {
+      picker = UIDocumentPickerViewController(
+        forOpeningContentTypes: [.folder],
+        asCopy: false
+      )
+    } else {
+      picker = UIDocumentPickerViewController(documentTypes: legacyFolderTypeIdentifiers(), in: .open)
+    }
+
+    return configurePicker(picker)
+  }
+
+  private func configurePicker(_ picker: UIDocumentPickerViewController) -> UIDocumentPickerViewController {
+    picker.delegate = self
+    picker.allowsMultipleSelection = false
+    picker.modalPresentationStyle = .fullScreen
+    picker.presentationController?.delegate = self
+    return picker
+  }
+
+  private func sanitizeExportFileName(_ fileName: String, expectedExtension: String) throws -> String {
+    let sanitized = (fileName as NSString).lastPathComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !sanitized.isEmpty else {
+      throw bookmarkError(.nativeError, "Export file name is required")
+    }
+
+    if (sanitized as NSString).pathExtension.lowercased() != expectedExtension {
+      return ((sanitized as NSString).deletingPathExtension as NSString).appendingPathExtension(expectedExtension) ?? sanitized + ".\(expectedExtension)"
+    }
+
+    return sanitized
+  }
+
+  private func makeTemporaryExportUrl(fileName: String) throws -> URL {
+    let exportDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("markscope-exports", isDirectory: true)
+    try FileManager.default.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
+    let scopedExportDirectory = exportDirectory.appendingPathComponent("\(DispatchTime.now().uptimeNanoseconds)", isDirectory: true)
+    try FileManager.default.createDirectory(at: scopedExportDirectory, withIntermediateDirectories: true)
+    return scopedExportDirectory.appendingPathComponent(fileName)
   }
 
   private func initialDirectoryUrl(for request: PickBookmarkRequestDTO?) -> URL? {
@@ -453,9 +703,34 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
   }
 
   private func clearPendingPickState() {
+    cleanupPendingExportFile()
     pendingInvoke = nil
     pendingPickRequest = nil
     pendingFolderPickRequest = nil
     pendingPickerKind = nil
+    pendingExportUrl = nil
+  }
+
+  private func cleanupPendingExportFile() {
+    guard let pendingExportUrl else {
+      return
+    }
+
+    let tempRoot = FileManager.default.temporaryDirectory.standardizedFileURL.path
+    let exportPath = pendingExportUrl.standardizedFileURL.path
+
+    guard exportPath.hasPrefix(tempRoot) else {
+      return
+    }
+
+    try? FileManager.default.removeItem(at: pendingExportUrl)
   }
 }
+
+#else
+
+import Foundation
+
+final class BookmarkPlugin: Plugin {}
+
+#endif

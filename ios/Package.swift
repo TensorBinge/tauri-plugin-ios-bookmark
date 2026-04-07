@@ -20,7 +20,7 @@ let package = Package(
     .target(
       name: "tauri-plugin-ios-bookmark",
       dependencies: [
-        .byName(name: "Tauri")
+        .product(name: "Tauri", package: "Tauri")
       ],
       path: "Sources"
     )

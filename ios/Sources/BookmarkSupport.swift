@@ -1,5 +1,7 @@
 import Foundation
+#if os(iOS)
 import Tauri
+#endif
 
 let bookmarkNativeErrorPrefix = "BOOKMARK_ERROR"
 

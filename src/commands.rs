@@ -69,3 +69,34 @@ pub async fn forget_bookmark<R: Runtime>(
     let bookmark = app.state::<IosBookmark<R>>();
     bookmark.forget_bookmark(id).await
 }
+
+/// Presents the native export flow for a file that already exists in the app sandbox.
+#[tauri::command]
+pub async fn export_file<R: Runtime>(
+    app: AppHandle<R>,
+    path: String,
+) -> Result<(), BookmarkError> {
+    println!("[ios-bookmark] rust command: export_file start path={path}");
+    let bookmark = app.state::<IosBookmark<R>>();
+    let result = bookmark.export_file(path).await;
+    println!("[ios-bookmark] rust command: export_file finish success={}", result.is_ok());
+    result
+}
+
+/// Renders HTML to a temporary PDF and presents the native export flow for it.
+#[tauri::command]
+pub async fn export_pdf<R: Runtime>(
+    app: AppHandle<R>,
+    file_name: String,
+    html: String,
+) -> Result<(), BookmarkError> {
+    println!(
+        "[ios-bookmark] rust command: export_pdf start file_name={} html_length={}",
+        file_name,
+        html.len()
+    );
+    let bookmark = app.state::<IosBookmark<R>>();
+    let result = bookmark.export_pdf(file_name, html).await;
+    println!("[ios-bookmark] rust command: export_pdf finish success={}", result.is_ok());
+    result
+}

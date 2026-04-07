@@ -46,4 +46,12 @@ impl<R: Runtime> IosBookmark<R> {
     pub async fn forget_bookmark(&self, _id: String) -> Result<(), BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
+
+    pub async fn export_file(&self, _path: String) -> Result<(), BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn export_pdf(&self, _file_name: String, _html: String) -> Result<(), BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
 }

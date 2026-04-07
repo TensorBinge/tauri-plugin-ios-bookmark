@@ -38,9 +38,9 @@ pub use models::*;
 pub use payloads::{pick_and_bookmark_payload, pick_folder_and_bookmark_payload};
 
 #[cfg(desktop)]
-pub(crate) use desktop::IosBookmark;
+pub use desktop::IosBookmark;
 #[cfg(mobile)]
-pub(crate) use mobile::IosBookmark;
+pub use mobile::IosBookmark;
 
 use tauri::{
     plugin::{Builder, TauriPlugin},
@@ -59,6 +59,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::pick_folder_and_bookmark,
             commands::read_by_bookmark,
             commands::read_by_folder_bookmark,
+            commands::export_file,
+            commands::export_pdf,
             commands::forget_bookmark,
         ])
         .setup(|app, api| {

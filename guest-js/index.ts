@@ -28,6 +28,14 @@ export interface PickFolderResult {
   folderPath: string
 }
 
+export async function exportPdf(fileName: string, html: string): Promise<void> {
+  return invoke<void>('plugin:ios-bookmark|export_pdf', { fileName, html })
+}
+
+export async function exportFile(path: string): Promise<void> {
+  return invoke<void>('plugin:ios-bookmark|export_file', { path })
+}
+
 export async function pickAndBookmark(request?: PickBookmarkRequest): Promise<PickResult> {
   return request === undefined
     ? invoke<PickResult>('plugin:ios-bookmark|pick_and_bookmark')

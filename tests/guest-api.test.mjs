@@ -20,11 +20,26 @@ beforeEach(() => {
 })
 
 test('exports the guest API functions', () => {
+  assert.equal(typeof api.exportPdf, 'function')
+  assert.equal(typeof api.exportFile, 'function')
   assert.equal(typeof api.pickAndBookmark, 'function')
   assert.equal(typeof api.pickFolderAndBookmark, 'function')
   assert.equal(typeof api.readByBookmark, 'function')
   assert.equal(typeof api.readByFolderBookmark, 'function')
   assert.equal(typeof api.forgetBookmark, 'function')
+})
+
+test('exportPdf forwards the file name and serialized html to the plugin command', async () => {
+  await api.exportPdf('theory.pdf', '<!DOCTYPE html>')
+
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|export_pdf',
+    {
+      fileName: 'theory.pdf',
+      html: '<!DOCTYPE html>',
+    },
+    undefined,
+  ]])
 })
 
 test('pickAndBookmark invokes the plugin command without a request payload by default', async () => {
@@ -126,6 +141,18 @@ test('readByFolderBookmark forwards the folder bookmark id and target path', asy
         id: 'folder-123',
         targetPath: '/docs/related.md',
       },
+    },
+    undefined,
+  ]])
+})
+
+test('exportFile forwards the temporary file path to the plugin command', async () => {
+  await api.exportFile('/tmp/markscope-exports/theory.epub')
+
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|export_file',
+    {
+      path: '/tmp/markscope-exports/theory.epub',
     },
     undefined,
   ]])

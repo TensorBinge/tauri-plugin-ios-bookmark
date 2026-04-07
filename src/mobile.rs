@@ -141,4 +141,42 @@ impl<R: Runtime> IosBookmark<R> {
                 normalize_ios_bookmark_error(e.to_string())
             })
     }
+
+    /// Presents the native export picker for a file that already exists in the app sandbox.
+    pub async fn export_file(&self, path: String) -> Result<(), BookmarkError> {
+        println!("[ios-bookmark] rust mobile bridge: exportFile({path}) -> start");
+        self.0
+            .run_mobile_plugin_async("exportFile", serde_json::json!({ "path": path }))
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: exportFile -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: exportFile -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
+    /// Renders HTML to a temporary PDF and presents the native export picker for it.
+    pub async fn export_pdf(&self, file_name: String, html: String) -> Result<(), BookmarkError> {
+        println!(
+            "[ios-bookmark] rust mobile bridge: exportPdf(file_name={file_name}, html_length={}) -> start",
+            html.len()
+        );
+        self.0
+            .run_mobile_plugin_async(
+                "exportPdf",
+                serde_json::json!({ "fileName": file_name, "html": html }),
+            )
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: exportPdf -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: exportPdf -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
 }
