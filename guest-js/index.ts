@@ -22,6 +22,14 @@ export interface ReadResult {
   content: string
 }
 
+export interface DirectoryEntry {
+  name: string
+  path: string
+  isDir: boolean
+  size: number
+  mtime: number
+}
+
 export interface PickFolderResult {
   bookmarkId: string
   folderName: string
@@ -54,6 +62,22 @@ export async function pickFolderAndBookmark(request?: PickFolderBookmarkRequest)
 
 export async function readByFolderBookmark(id: string, targetPath: string): Promise<ReadResult> {
   return invoke<ReadResult>('plugin:ios-bookmark|read_by_folder_bookmark', { args: { id, targetPath } })
+}
+
+export async function listByFolderBookmark(id: string, targetPath: string): Promise<DirectoryEntry[]> {
+  return invoke<DirectoryEntry[]>('plugin:ios-bookmark|list_by_folder_bookmark', { args: { id, targetPath } })
+}
+
+export async function writeByBookmark(id: string, contents: string): Promise<ReadResult> {
+  return invoke<ReadResult>('plugin:ios-bookmark|write_by_bookmark', { args: { id, contents } })
+}
+
+export async function writeByFolderBookmark(id: string, targetPath: string, contents: string): Promise<ReadResult> {
+  return invoke<ReadResult>('plugin:ios-bookmark|write_by_folder_bookmark', { args: { id, targetPath, contents } })
+}
+
+export async function createDirectoryByFolderBookmark(id: string, targetPath: string): Promise<void> {
+  return invoke<void>('plugin:ios-bookmark|create_directory_by_folder_bookmark', { args: { id, targetPath } })
 }
 
 export async function forgetBookmark(id: string): Promise<void> {

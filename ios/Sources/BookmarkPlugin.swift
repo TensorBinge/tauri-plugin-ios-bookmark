@@ -56,6 +56,16 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
   private var pendingExportUrl: URL?
   private let store = BookmarkStore()
 
+  private func debugLog(_ message: String) {
+    Logger.info(message, category: "ios-bookmark")
+    print("[ios-bookmark-debug] \(message)")
+  }
+
+  private func debugError(_ message: String) {
+    Logger.error(message, category: "ios-bookmark")
+    print("[ios-bookmark-debug][error] \(message)")
+  }
+
   @objc public func pickAndBookmark(_ invoke: Invoke) {
     Logger.info("[ios-bookmark] swift plugin: pickAndBookmark entered mainThread=\(Thread.isMainThread)", category: "ios-bookmark")
 
@@ -249,7 +259,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
   }
 
   @objc public func readByFolderBookmark(_ invoke: Invoke) {
-    Logger.info("[ios-bookmark] swift plugin: readByFolderBookmark entered", category: "ios-bookmark")
+    debugLog("[ios-bookmark] swift plugin: readByFolderBookmark entered")
     struct Args: Decodable {
       let id: String
       let targetPath: String
@@ -257,52 +267,151 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
 
     do {
       let args = try invoke.parseArgs(Args.self)
-      guard let bookmarkData = store.getBookmarkData(id: args.id) else {
-        throw bookmarkError(.notFound, "No folder bookmark found for id: \(args.id)")
-      }
-
-      var stale = false
-      let folderUrl = try URL(
-        resolvingBookmarkData: bookmarkData,
-        options: [],
-        relativeTo: nil,
-        bookmarkDataIsStale: &stale
-      )
-
-      guard urlIsWithinFolder(targetPath: args.targetPath, folderPath: folderUrl.path) else {
-        throw bookmarkError(.permissionDenied, "Requested path is outside the bookmarked folder")
-      }
+      debugLog("[ios-bookmark] swift plugin: readByFolderBookmark args id=\(args.id) targetPath=\(args.targetPath)")
+      let folderUrl = try resolveFolderBookmarkUrl(id: args.id)
+      debugLog("[ios-bookmark] swift plugin: readByFolderBookmark folderUrl=\(folderUrl.path)")
 
       guard folderUrl.startAccessingSecurityScopedResource() else {
         throw bookmarkError(.permissionDenied, "Failed to access security-scoped folder for id: \(args.id)")
       }
       defer { folderUrl.stopAccessingSecurityScopedResource() }
 
+      let targetUrl = try resolveTargetUrlWithinFolder(folderUrl: folderUrl, targetPath: args.targetPath)
+      let content = try coordinatedRead(url: targetUrl)
+      debugLog("[ios-bookmark] swift plugin: readByFolderBookmark resolved for \(targetUrl.lastPathComponent)")
+      invoke.resolve(ReadResultDTO(fileName: targetUrl.lastPathComponent, filePath: targetUrl.path, content: content))
+    } catch {
+      debugError("[ios-bookmark] swift plugin: readByFolderBookmark error \(error.localizedDescription)")
+      invoke.reject(bookmarkRejectMessage(for: error))
+    }
+  }
+
+  @objc public func listByFolderBookmark(_ invoke: Invoke) {
+    debugLog("[ios-bookmark] swift plugin: listByFolderBookmark entered")
+    struct Args: Decodable {
+      let id: String
+      let targetPath: String
+    }
+
+    do {
+      let args = try invoke.parseArgs(Args.self)
+      debugLog("[ios-bookmark] swift plugin: listByFolderBookmark args id=\(args.id) targetPath=\(args.targetPath)")
+      let folderUrl = try resolveFolderBookmarkUrl(id: args.id)
+      debugLog("[ios-bookmark] swift plugin: listByFolderBookmark folderUrl=\(folderUrl.path)")
+      let targetUrl = try resolveTargetUrlWithinFolder(folderUrl: folderUrl, targetPath: args.targetPath)
+      debugLog("[ios-bookmark] swift plugin: listByFolderBookmark targetUrl=\(targetUrl.path)")
+
+      let entries = try withScopedFolderAccess(folderUrl: folderUrl) {
+        try listDirectoryEntries(at: targetUrl)
+      }
+
+      debugLog("[ios-bookmark] swift plugin: listByFolderBookmark resolved count=\(entries.count)")
+
+      invoke.resolve(entries)
+    } catch {
+      debugError("[ios-bookmark] swift plugin: listByFolderBookmark error \(error.localizedDescription)")
+      invoke.reject(bookmarkRejectMessage(for: error))
+    }
+  }
+
+  @objc public func writeByBookmark(_ invoke: Invoke) {
+    Logger.info("[ios-bookmark] swift plugin: writeByBookmark entered", category: "ios-bookmark")
+    struct Args: Decodable {
+      let id: String
+      let contents: String
+    }
+
+    do {
+      let args = try invoke.parseArgs(Args.self)
+      guard let bookmarkData = store.getBookmarkData(id: args.id) else {
+        throw bookmarkError(.notFound, "No bookmark found for id: \(args.id)")
+      }
+
+      var stale = false
+      let url = try URL(
+        resolvingBookmarkData: bookmarkData,
+        options: [],
+        relativeTo: nil,
+        bookmarkDataIsStale: &stale
+      )
+
+      guard url.startAccessingSecurityScopedResource() else {
+        throw bookmarkError(.permissionDenied, "Failed to access security-scoped resource for id: \(args.id)")
+      }
+      defer { url.stopAccessingSecurityScopedResource() }
+
       if stale {
-        let refreshedBookmark = try folderUrl.bookmarkData(
+        let refreshedBookmark = try url.bookmarkData(
           options: [],
           includingResourceValuesForKeys: nil,
           relativeTo: nil
         )
-        let refreshedName = try? folderUrl.resourceValues(forKeys: [.nameKey]).name
-        store.updateFolder(id: args.id, bookmarkData: refreshedBookmark, folderName: refreshedName)
+        let refreshedName = try? url.resourceValues(forKeys: [.nameKey]).name
+        store.update(id: args.id, bookmarkData: refreshedBookmark, fileName: refreshedName)
       }
 
-      let targetUrl = URL(fileURLWithPath: args.targetPath).resolvingSymlinksInPath()
-      let resolvedFolderPath = folderUrl.resolvingSymlinksInPath().path
-      let normalizedTarget = normalizeIosScopedPath(targetUrl.path)
-      let normalizedFolder = normalizeIosScopedPath(resolvedFolderPath)
-      guard resolvedPathIsWithinFolder(normalizedTarget, folder: normalizedFolder) else {
-        throw bookmarkError(
-          .permissionDenied,
-          "Resolved path '\(normalizedTarget)' is outside the bookmarked folder '\(normalizedFolder)'"
-        )
-      }
-      let content = try coordinatedRead(url: targetUrl)
-      Logger.info("[ios-bookmark] swift plugin: readByFolderBookmark resolved for \(targetUrl.lastPathComponent)", category: "ios-bookmark")
-      invoke.resolve(ReadResultDTO(fileName: targetUrl.lastPathComponent, filePath: targetUrl.path, content: content))
+      try coordinatedWrite(url: url, contents: args.contents)
+      let fileName = store.getFileName(id: args.id) ?? url.lastPathComponent
+      invoke.resolve(ReadResultDTO(fileName: fileName, filePath: url.path, content: args.contents))
     } catch {
-      Logger.error("[ios-bookmark] swift plugin: readByFolderBookmark error \(error.localizedDescription)", category: "ios-bookmark")
+      Logger.error("[ios-bookmark] swift plugin: writeByBookmark error \(error.localizedDescription)", category: "ios-bookmark")
+      invoke.reject(bookmarkRejectMessage(for: error))
+    }
+  }
+
+  @objc public func writeByFolderBookmark(_ invoke: Invoke) {
+    debugLog("[ios-bookmark] swift plugin: writeByFolderBookmark entered")
+    struct Args: Decodable {
+      let id: String
+      let targetPath: String
+      let contents: String
+    }
+
+    do {
+      let args = try invoke.parseArgs(Args.self)
+      debugLog("[ios-bookmark] swift plugin: writeByFolderBookmark args id=\(args.id) targetPath=\(args.targetPath) contentsLength=\(args.contents.count)")
+      let folderUrl = try resolveFolderBookmarkUrl(id: args.id)
+      debugLog("[ios-bookmark] swift plugin: writeByFolderBookmark folderUrl=\(folderUrl.path)")
+      let targetUrl = try resolveTargetUrlWithinFolder(folderUrl: folderUrl, targetPath: args.targetPath)
+      debugLog("[ios-bookmark] swift plugin: writeByFolderBookmark targetUrl=\(targetUrl.path)")
+
+      try withScopedFolderAccess(folderUrl: folderUrl) {
+        try coordinatedWrite(url: targetUrl, contents: args.contents)
+      }
+
+      debugLog("[ios-bookmark] swift plugin: writeByFolderBookmark resolved filePath=\(targetUrl.path)")
+
+      invoke.resolve(ReadResultDTO(fileName: targetUrl.lastPathComponent, filePath: targetUrl.path, content: args.contents))
+    } catch {
+      debugError("[ios-bookmark] swift plugin: writeByFolderBookmark error \(error.localizedDescription)")
+      invoke.reject(bookmarkRejectMessage(for: error))
+    }
+  }
+
+  @objc public func createDirectoryByFolderBookmark(_ invoke: Invoke) {
+    debugLog("[ios-bookmark] swift plugin: createDirectoryByFolderBookmark entered")
+    struct Args: Decodable {
+      let id: String
+      let targetPath: String
+    }
+
+    do {
+      let args = try invoke.parseArgs(Args.self)
+      debugLog("[ios-bookmark] swift plugin: createDirectoryByFolderBookmark args id=\(args.id) targetPath=\(args.targetPath)")
+      let folderUrl = try resolveFolderBookmarkUrl(id: args.id)
+      debugLog("[ios-bookmark] swift plugin: createDirectoryByFolderBookmark folderUrl=\(folderUrl.path)")
+      let targetUrl = try resolveTargetUrlWithinFolder(folderUrl: folderUrl, targetPath: args.targetPath)
+      debugLog("[ios-bookmark] swift plugin: createDirectoryByFolderBookmark targetUrl=\(targetUrl.path)")
+
+      try withScopedFolderAccess(folderUrl: folderUrl) {
+        try FileManager.default.createDirectory(at: targetUrl, withIntermediateDirectories: true)
+      }
+
+      debugLog("[ios-bookmark] swift plugin: createDirectoryByFolderBookmark resolved targetUrl=\(targetUrl.path)")
+
+      invoke.resolve()
+    } catch {
+      debugError("[ios-bookmark] swift plugin: createDirectoryByFolderBookmark error \(error.localizedDescription)")
       invoke.reject(bookmarkRejectMessage(for: error))
     }
   }
@@ -555,6 +664,130 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     Logger.info("[ios-bookmark] swift plugin: coordinatedRead success for \(url.lastPathComponent)", category: "ios-bookmark")
 
     return content
+  }
+
+  private func coordinatedWrite(url: URL, contents: String) throws {
+    Logger.info("[ios-bookmark] swift plugin: coordinatedWrite start for \(url.lastPathComponent)", category: "ios-bookmark")
+    let parentDirectory = url.deletingLastPathComponent()
+    try FileManager.default.createDirectory(at: parentDirectory, withIntermediateDirectories: true)
+
+    if !FileManager.default.fileExists(atPath: url.path) {
+      FileManager.default.createFile(atPath: url.path, contents: nil)
+    }
+
+    var coordinatorError: NSError?
+    var writeError: Error?
+    let coordinator = NSFileCoordinator(filePresenter: nil)
+
+    coordinator.coordinate(writingItemAt: url, options: [], error: &coordinatorError) { writeUrl in
+      do {
+        try contents.write(to: writeUrl, atomically: true, encoding: .utf8)
+      } catch {
+        writeError = error
+      }
+    }
+
+    if let coordinatorError {
+      throw coordinatorError
+    }
+    if let writeError {
+      throw writeError
+    }
+  }
+
+  private func listDirectoryEntries(at directoryUrl: URL) throws -> [DirectoryEntryDTO] {
+    let resourceKeys: Set<URLResourceKey> = [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .nameKey]
+    let urls = try FileManager.default.contentsOfDirectory(at: directoryUrl, includingPropertiesForKeys: Array(resourceKeys), options: [.skipsHiddenFiles])
+
+    return try urls.map { entryUrl in
+      let values = try entryUrl.resourceValues(forKeys: resourceKeys)
+      let modifiedAt = values.contentModificationDate?.timeIntervalSince1970 ?? 0
+
+      return DirectoryEntryDTO(
+        name: values.name ?? entryUrl.lastPathComponent,
+        path: entryUrl.path,
+        isDir: values.isDirectory ?? false,
+        size: UInt64(values.fileSize ?? 0),
+        mtime: UInt64(modifiedAt * 1000)
+      )
+    }
+  }
+
+  private func resolveFolderBookmarkUrl(id: String) throws -> URL {
+    debugLog("[ios-bookmark] swift plugin: resolveFolderBookmarkUrl start id=\(id)")
+    guard let bookmarkData = store.getBookmarkData(id: id) else {
+      debugError("[ios-bookmark] swift plugin: resolveFolderBookmarkUrl missing bookmark data id=\(id)")
+      throw bookmarkError(.notFound, "No folder bookmark found for id: \(id)")
+    }
+
+    var stale = false
+    let folderUrl = try URL(
+      resolvingBookmarkData: bookmarkData,
+      options: [],
+      relativeTo: nil,
+      bookmarkDataIsStale: &stale
+    )
+
+    debugLog("[ios-bookmark] swift plugin: resolveFolderBookmarkUrl resolved id=\(id) path=\(folderUrl.path) stale=\(stale)")
+
+    if stale {
+      let refreshedBookmark = try folderUrl.bookmarkData(
+        options: [],
+        includingResourceValuesForKeys: nil,
+        relativeTo: nil
+      )
+      let refreshedName = try? folderUrl.resourceValues(forKeys: [.nameKey]).name
+      store.updateFolder(id: id, bookmarkData: refreshedBookmark, folderName: refreshedName)
+    }
+
+    return folderUrl
+  }
+
+  private func withScopedFolderAccess<T>(folderUrl: URL, action: () throws -> T) throws -> T {
+    debugLog("[ios-bookmark] swift plugin: withScopedFolderAccess start path=\(folderUrl.path)")
+    guard folderUrl.startAccessingSecurityScopedResource() else {
+      debugError("[ios-bookmark] swift plugin: withScopedFolderAccess failed startAccessing path=\(folderUrl.path)")
+      throw bookmarkError(.permissionDenied, "Failed to access security-scoped folder")
+    }
+    defer { folderUrl.stopAccessingSecurityScopedResource() }
+
+    let result = try action()
+    debugLog("[ios-bookmark] swift plugin: withScopedFolderAccess completed path=\(folderUrl.path)")
+    return result
+  }
+
+  private func resolveTargetUrlWithinFolder(folderUrl: URL, targetPath: String) throws -> URL {
+    let normalizedFolder = normalizeIosScopedPath(folderUrl.resolvingSymlinksInPath().path)
+    let normalizedTarget = standardizedPath(for: targetPath)
+
+    debugLog(
+      "[ios-bookmark] swift plugin: resolveTargetUrlWithinFolder folderPath=\(folderUrl.path) targetPath=\(targetPath) normalizedFolder=\(normalizedFolder) normalizedTarget=\(normalizedTarget)",
+    )
+
+    guard resolvedPathIsWithinFolder(normalizedTarget, folder: normalizedFolder) else {
+      debugError(
+        "[ios-bookmark] swift plugin: resolveTargetUrlWithinFolder outside scope folder=\(normalizedFolder) target=\(normalizedTarget)",
+      )
+      throw bookmarkError(.permissionDenied, "Requested path is outside the bookmarked folder")
+    }
+
+    if normalizedTarget == normalizedFolder {
+      debugLog("[ios-bookmark] swift plugin: resolveTargetUrlWithinFolder target is folder root")
+      return folderUrl.standardizedFileURL
+    }
+
+    let relativePath = String(normalizedTarget.dropFirst(normalizedFolder.count + 1))
+    let relativeComponents = relativePath.split(separator: "/").map(String.init)
+
+    let resolvedUrl = relativeComponents.reduce(folderUrl.standardizedFileURL) { partialUrl, component in
+      partialUrl.appendingPathComponent(component)
+    }
+
+    debugLog(
+      "[ios-bookmark] swift plugin: resolveTargetUrlWithinFolder relativePath=\(relativePath) components=\(relativeComponents.joined(separator: "/")) resolvedUrl=\(resolvedUrl.path)",
+    )
+
+    return resolvedUrl
   }
 
   @available(iOS 14.0, *)

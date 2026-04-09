@@ -48,6 +48,35 @@ pub struct ReadByFolderBookmarkArgs {
     pub target_path: String,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListByFolderBookmarkArgs {
+    pub id: String,
+    pub target_path: String,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WriteByBookmarkArgs {
+    pub id: String,
+    pub contents: String,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WriteByFolderBookmarkArgs {
+    pub id: String,
+    pub target_path: String,
+    pub contents: String,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateDirectoryByFolderBookmarkArgs {
+    pub id: String,
+    pub target_path: String,
+}
+
 /// Reads a file within a previously authorized folder scope.
 #[tauri::command]
 pub async fn read_by_folder_bookmark<R: Runtime>(
@@ -57,6 +86,48 @@ pub async fn read_by_folder_bookmark<R: Runtime>(
     let bookmark = app.state::<IosBookmark<R>>();
     bookmark
         .read_by_folder_bookmark(args.id, args.target_path)
+        .await
+}
+
+#[tauri::command]
+pub async fn list_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: ListByFolderBookmarkArgs,
+) -> Result<Vec<DirectoryEntry>, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .list_by_folder_bookmark(args.id, args.target_path)
+        .await
+}
+
+#[tauri::command]
+pub async fn write_by_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: WriteByBookmarkArgs,
+) -> Result<ReadResult, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark.write_by_bookmark(args.id, args.contents).await
+}
+
+#[tauri::command]
+pub async fn write_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: WriteByFolderBookmarkArgs,
+) -> Result<ReadResult, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .write_by_folder_bookmark(args.id, args.target_path, args.contents)
+        .await
+}
+
+#[tauri::command]
+pub async fn create_directory_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: CreateDirectoryByFolderBookmarkArgs,
+) -> Result<(), BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .create_directory_by_folder_bookmark(args.id, args.target_path)
         .await
 }
 

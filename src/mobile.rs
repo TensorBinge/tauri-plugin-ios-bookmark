@@ -126,6 +126,105 @@ impl<R: Runtime> IosBookmark<R> {
             })
     }
 
+    pub async fn list_by_folder_bookmark(
+        &self,
+        id: String,
+        target_path: String,
+    ) -> Result<Vec<DirectoryEntry>, BookmarkError> {
+        println!(
+            "[ios-bookmark-rust] listByFolderBookmark(id={id}, target_path={target_path}) -> start"
+        );
+        self.0
+            .run_mobile_plugin_async(
+                "listByFolderBookmark",
+                serde_json::json!({ "id": id, "targetPath": target_path }),
+            )
+            .await
+            .map(|result| {
+                println!("[ios-bookmark-rust] listByFolderBookmark -> resolved count={}", result.len());
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark-rust] listByFolderBookmark -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
+    pub async fn write_by_bookmark(
+        &self,
+        id: String,
+        contents: String,
+    ) -> Result<ReadResult, BookmarkError> {
+        println!(
+            "[ios-bookmark-rust] writeByBookmark(id={id}, contents_length={}) -> start",
+            contents.len()
+        );
+        self.0
+            .run_mobile_plugin_async(
+                "writeByBookmark",
+                serde_json::json!({ "id": id, "contents": contents }),
+            )
+            .await
+            .map(|result| {
+                println!("[ios-bookmark-rust] writeByBookmark -> resolved file_path={}", result.file_path);
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark-rust] writeByBookmark -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
+    pub async fn write_by_folder_bookmark(
+        &self,
+        id: String,
+        target_path: String,
+        contents: String,
+    ) -> Result<ReadResult, BookmarkError> {
+        println!(
+            "[ios-bookmark-rust] writeByFolderBookmark(id={id}, target_path={target_path}, contents_length={}) -> start",
+            contents.len()
+        );
+        self.0
+            .run_mobile_plugin_async(
+                "writeByFolderBookmark",
+                serde_json::json!({ "id": id, "targetPath": target_path, "contents": contents }),
+            )
+            .await
+            .map(|result| {
+                println!("[ios-bookmark-rust] writeByFolderBookmark -> resolved file_path={}", result.file_path);
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark-rust] writeByFolderBookmark -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
+    pub async fn create_directory_by_folder_bookmark(
+        &self,
+        id: String,
+        target_path: String,
+    ) -> Result<(), BookmarkError> {
+        println!(
+            "[ios-bookmark-rust] createDirectoryByFolderBookmark(id={id}, target_path={target_path}) -> start"
+        );
+        self.0
+            .run_mobile_plugin_async(
+                "createDirectoryByFolderBookmark",
+                serde_json::json!({ "id": id, "targetPath": target_path }),
+            )
+            .await
+            .map(|result| {
+                println!("[ios-bookmark-rust] createDirectoryByFolderBookmark -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark-rust] createDirectoryByFolderBookmark -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
     /// Forgets a stored bookmark so the native side can release the security-scoped grant.
     pub async fn forget_bookmark(&self, id: String) -> Result<(), BookmarkError> {
         println!("[ios-bookmark] rust mobile bridge: forgetBookmark({id}) -> start");

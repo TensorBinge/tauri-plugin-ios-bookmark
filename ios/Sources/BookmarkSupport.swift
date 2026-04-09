@@ -68,6 +68,14 @@ struct ReadResultDTO: Encodable {
   let content: String
 }
 
+struct DirectoryEntryDTO: Encodable {
+  let name: String
+  let path: String
+  let isDir: Bool
+  let size: UInt64
+  let mtime: UInt64
+}
+
 @_cdecl("init_plugin_ios_bookmark")
 func initPluginIosBookmark() -> Plugin {
   BookmarkPlugin()

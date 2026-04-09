@@ -43,6 +43,39 @@ impl<R: Runtime> IosBookmark<R> {
         Err(BookmarkError::Unsupported)
     }
 
+    pub async fn list_by_folder_bookmark(
+        &self,
+        _id: String,
+        _target_path: String,
+    ) -> Result<Vec<DirectoryEntry>, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn write_by_bookmark(
+        &self,
+        _id: String,
+        _contents: String,
+    ) -> Result<ReadResult, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn write_by_folder_bookmark(
+        &self,
+        _id: String,
+        _target_path: String,
+        _contents: String,
+    ) -> Result<ReadResult, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn create_directory_by_folder_bookmark(
+        &self,
+        _id: String,
+        _target_path: String,
+    ) -> Result<(), BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
     pub async fn forget_bookmark(&self, _id: String) -> Result<(), BookmarkError> {
         Err(BookmarkError::Unsupported)
     }

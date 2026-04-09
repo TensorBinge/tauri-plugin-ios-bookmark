@@ -57,8 +57,12 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         .invoke_handler(tauri::generate_handler![
             commands::pick_and_bookmark,
             commands::pick_folder_and_bookmark,
+            commands::list_by_folder_bookmark,
             commands::read_by_bookmark,
             commands::read_by_folder_bookmark,
+            commands::write_by_bookmark,
+            commands::write_by_folder_bookmark,
+            commands::create_directory_by_folder_bookmark,
             commands::export_file,
             commands::export_pdf,
             commands::forget_bookmark,
