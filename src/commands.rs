@@ -109,7 +109,9 @@ pub async fn export_pdf<R: Runtime>(
         args.toc.len()
     );
     let bookmark = app.state::<IosBookmark<R>>();
-    let result = bookmark.export_pdf(args.file_name, args.html, args.toc).await;
+    let result = bookmark
+        .export_pdf(args.file_name, args.html, args.toc)
+        .await;
     println!(
         "[ios-bookmark] rust command: export_pdf finish success={}",
         result.is_ok()
