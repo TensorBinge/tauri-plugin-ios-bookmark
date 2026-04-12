@@ -89,14 +89,16 @@ pub async fn export_pdf<R: Runtime>(
     app: AppHandle<R>,
     file_name: String,
     html: String,
+    toc: Vec<ExportTocEntry>,
 ) -> Result<(), BookmarkError> {
     println!(
-        "[ios-bookmark] rust command: export_pdf start file_name={} html_length={}",
+        "[ios-bookmark] rust command: export_pdf start file_name={} html_length={} toc_length={}",
         file_name,
-        html.len()
+        html.len(),
+        toc.len()
     );
     let bookmark = app.state::<IosBookmark<R>>();
-    let result = bookmark.export_pdf(file_name, html).await;
+    let result = bookmark.export_pdf(file_name, html, toc).await;
     println!(
         "[ios-bookmark] rust command: export_pdf finish success={}",
         result.is_ok()

@@ -51,7 +51,12 @@ impl<R: Runtime> IosBookmark<R> {
         Err(BookmarkError::Unsupported)
     }
 
-    pub async fn export_pdf(&self, _file_name: String, _html: String) -> Result<(), BookmarkError> {
+    pub async fn export_pdf(
+        &self,
+        _file_name: String,
+        _html: String,
+        _toc: Vec<ExportTocEntry>,
+    ) -> Result<(), BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 }

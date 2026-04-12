@@ -159,15 +159,21 @@ impl<R: Runtime> IosBookmark<R> {
     }
 
     /// Renders HTML to a temporary PDF and presents the native export picker for it.
-    pub async fn export_pdf(&self, file_name: String, html: String) -> Result<(), BookmarkError> {
+    pub async fn export_pdf(
+        &self,
+        file_name: String,
+        html: String,
+        toc: Vec<ExportTocEntry>,
+    ) -> Result<(), BookmarkError> {
         println!(
-            "[ios-bookmark] rust mobile bridge: exportPdf(file_name={file_name}, html_length={}) -> start",
-            html.len()
+            "[ios-bookmark] rust mobile bridge: exportPdf(file_name={file_name}, html_length={}, toc_length={}) -> start",
+            html.len(),
+            toc.len()
         );
         self.0
             .run_mobile_plugin_async(
                 "exportPdf",
-                serde_json::json!({ "fileName": file_name, "html": html }),
+                serde_json::json!({ "fileName": file_name, "html": html, "toc": toc }),
             )
             .await
             .map(|result| {
