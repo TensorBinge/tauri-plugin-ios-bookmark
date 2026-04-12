@@ -51,6 +51,14 @@ pub struct ReadResult {
     pub content: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportTocEntry {
+    pub id: String,
+    pub title: String,
+    pub depth: u8,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum BookmarkError {
     #[error("security-scoped bookmarks are not supported on this platform")]

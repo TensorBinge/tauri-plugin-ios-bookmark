@@ -3,6 +3,7 @@ import Foundation
 #if os(iOS)
 import Tauri
 #endif
+import PDFKit
 import UIKit
 import UniformTypeIdentifiers
 
@@ -21,6 +22,12 @@ private struct PickBookmarkRequestDTO: Decodable {
 
 private struct PickFolderBookmarkRequestDTO: Decodable {
   let targetPath: String?
+}
+
+private struct ExportTocEntryDTO: Decodable {
+  let id: String
+  let title: String
+  let depth: Int
 }
 
 private enum PendingPickerKind {
@@ -202,6 +209,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     struct Args: Decodable {
       let fileName: String
       let html: String
+      let toc: [ExportTocEntryDTO]?
     }
 
     let presentPicker = {
@@ -209,8 +217,9 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
 
       do {
         let args = try invoke.parseArgs(Args.self)
-        Logger.info("[ios-bookmark] swift plugin: exportPdf parsed fileName=\(args.fileName) htmlLength=\(args.html.count)", category: "ios-bookmark")
-        let fileUrl = try self.renderPdfExportFile(fileName: args.fileName, html: args.html)
+        let toc = args.toc ?? []
+        Logger.info("[ios-bookmark] swift plugin: exportPdf parsed fileName=\(args.fileName) htmlLength=\(args.html.count) tocLength=\(toc.count)", category: "ios-bookmark")
+        let fileUrl = try self.renderPdfExportFile(fileName: args.fileName, html: args.html, toc: toc)
         Logger.info("[ios-bookmark] swift plugin: exportPdf rendered temp file at \(fileUrl.path)", category: "ios-bookmark")
         try self.presentExportPicker(fileUrl: fileUrl, invoke: invoke)
       } catch {
@@ -393,7 +402,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     clearPendingPickState()
   }
 
-  private func renderPdfExportFile(fileName: String, html: String) throws -> URL {
+  private func renderPdfExportFile(fileName: String, html: String, toc: [ExportTocEntryDTO]) throws -> URL {
     let sanitizedFileName = try sanitizeExportFileName(fileName, expectedExtension: "pdf")
     let fileUrl = try makeTemporaryExportUrl(fileName: sanitizedFileName)
     let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8)
@@ -413,8 +422,72 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     }
 
     UIGraphicsEndPDFContext()
-    try pdfData.write(to: fileUrl, options: .atomic)
+    let outlinedPdfData = addOutlineMetadata(to: pdfData as Data, toc: toc)
+    try outlinedPdfData.write(to: fileUrl, options: .atomic)
     return fileUrl
+  }
+
+  private func addOutlineMetadata(to pdfData: Data, toc: [ExportTocEntryDTO]) -> Data {
+    guard !toc.isEmpty else {
+      return pdfData
+    }
+
+    guard let document = PDFDocument(data: pdfData) else {
+      return pdfData
+    }
+
+    let root = PDFOutline()
+    var outlineStack: [(depth: Int, outline: PDFOutline)] = [(depth: 0, outline: root)]
+    var lastSelection: PDFSelection?
+
+    for entry in toc {
+      guard let selection = findSelection(for: entry.title, after: lastSelection, in: document) else {
+        continue
+      }
+
+      guard let page = selection.pages.first else {
+        continue
+      }
+
+      let bounds = selection.bounds(for: page)
+      let outline = PDFOutline()
+      outline.label = entry.title
+      outline.destination = PDFDestination(page: page, at: CGPoint(x: bounds.minX, y: bounds.maxY))
+
+      while outlineStack.count > 1 && entry.depth <= outlineStack[outlineStack.count - 1].depth {
+        outlineStack.removeLast()
+      }
+
+      let parentOutline = outlineStack[outlineStack.count - 1].outline
+      parentOutline.insertChild(outline, at: parentOutline.numberOfChildren)
+      outlineStack.append((depth: max(entry.depth, 1), outline: outline))
+      lastSelection = selection
+    }
+
+    guard root.numberOfChildren > 0 else {
+      return pdfData
+    }
+
+    document.outlineRoot = root
+    return document.dataRepresentation() ?? pdfData
+  }
+
+  private func findSelection(for title: String, after previousSelection: PDFSelection?, in document: PDFDocument) -> PDFSelection? {
+    if let previousSelection {
+      if let nextSelection = document.findString(title, fromSelection: previousSelection, withOptions: []) {
+        return nextSelection
+      }
+
+      if let nextSelection = document.findString(title, fromSelection: previousSelection, withOptions: [.caseInsensitive, .diacriticInsensitive]) {
+        return nextSelection
+      }
+    }
+
+    if let exactSelection = document.findString(title, withOptions: []).first {
+      return exactSelection
+    }
+
+    return document.findString(title, withOptions: [.caseInsensitive, .diacriticInsensitive]).first
   }
 
   private func presentExportPicker(fileUrl: URL, invoke: Invoke) throws {

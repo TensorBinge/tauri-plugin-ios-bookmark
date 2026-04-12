@@ -83,20 +83,35 @@ pub async fn export_file<R: Runtime>(app: AppHandle<R>, path: String) -> Result<
     result
 }
 
+/// Argument object used for the PDF export command.
+///
+/// `toc` is defaulted so older guest API versions that only send `fileName`
+/// and `html` continue to deserialize successfully.
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportPdfArgs {
+    pub file_name: String,
+    pub html: String,
+    #[serde(default)]
+    pub toc: Vec<ExportTocEntry>,
+}
+
 /// Renders HTML to a temporary PDF and presents the native export flow for it.
 #[tauri::command]
 pub async fn export_pdf<R: Runtime>(
     app: AppHandle<R>,
-    file_name: String,
-    html: String,
+    args: ExportPdfArgs,
 ) -> Result<(), BookmarkError> {
     println!(
-        "[ios-bookmark] rust command: export_pdf start file_name={} html_length={}",
-        file_name,
-        html.len()
+        "[ios-bookmark] rust command: export_pdf start file_name={} html_length={} toc_length={}",
+        args.file_name,
+        args.html.len(),
+        args.toc.len()
     );
     let bookmark = app.state::<IosBookmark<R>>();
-    let result = bookmark.export_pdf(file_name, html).await;
+    let result = bookmark
+        .export_pdf(args.file_name, args.html, args.toc)
+        .await;
     println!(
         "[ios-bookmark] rust command: export_pdf finish success={}",
         result.is_ok()
