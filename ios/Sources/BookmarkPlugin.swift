@@ -209,7 +209,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     struct Args: Decodable {
       let fileName: String
       let html: String
-      let toc: [ExportTocEntryDTO]
+      let toc: [ExportTocEntryDTO]?
     }
 
     let presentPicker = {
@@ -217,8 +217,9 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
 
       do {
         let args = try invoke.parseArgs(Args.self)
-        Logger.info("[ios-bookmark] swift plugin: exportPdf parsed fileName=\(args.fileName) htmlLength=\(args.html.count) tocLength=\(args.toc.count)", category: "ios-bookmark")
-        let fileUrl = try self.renderPdfExportFile(fileName: args.fileName, html: args.html, toc: args.toc)
+        let toc = args.toc ?? []
+        Logger.info("[ios-bookmark] swift plugin: exportPdf parsed fileName=\(args.fileName) htmlLength=\(args.html.count) tocLength=\(toc.count)", category: "ios-bookmark")
+        let fileUrl = try self.renderPdfExportFile(fileName: args.fileName, html: args.html, toc: toc)
         Logger.info("[ios-bookmark] swift plugin: exportPdf rendered temp file at \(fileUrl.path)", category: "ios-bookmark")
         try self.presentExportPicker(fileUrl: fileUrl, invoke: invoke)
       } catch {
