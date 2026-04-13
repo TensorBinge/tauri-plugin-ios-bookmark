@@ -241,9 +241,8 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
   ) {
     Logger.info("[ios-bookmark] swift plugin: didPickDocumentsAt count=\(urls.count)", category: "ios-bookmark")
     guard let url = urls.first else {
-      Logger.error("[ios-bookmark] swift plugin: didPickDocumentsAt without url", category: "ios-bookmark")
-      pendingInvoke?.reject("\(bookmarkNativeErrorPrefix):\(BookmarkErrorCode.cancelled.rawValue):No file selected")
-      clearPendingPickState()
+      Logger.info("[ios-bookmark] swift plugin: didPickDocumentsAt without url", category: "ios-bookmark")
+      resolvePendingCancellation(reason: "No file selected")
       return
     }
 
@@ -530,12 +529,12 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
 
   public func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
     Logger.info("[ios-bookmark] swift plugin: documentPickerWasCancelled", category: "ios-bookmark")
-    rejectPendingInvoke(bookmarkError(.cancelled, "User cancelled"))
+    resolvePendingCancellation(reason: "User cancelled")
   }
 
   public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
     Logger.info("[ios-bookmark] swift plugin: presentationControllerDidDismiss", category: "ios-bookmark")
-    rejectPendingInvoke(bookmarkError(.cancelled, "Picker dismissed"))
+    resolvePendingCancellation(reason: "Picker dismissed")
   }
 
   @objc public func readByBookmark(_ invoke: Invoke) {
@@ -772,6 +771,21 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
 
   private func rejectPendingInvoke(_ error: Error) {
     pendingInvoke?.reject(bookmarkRejectMessage(for: error))
+    clearPendingPickState()
+  }
+
+  private func resolvePendingCancellation(reason: String) {
+    Logger.info("[ios-bookmark] swift plugin: resolving picker cancellation kind=\(String(describing: pendingPickerKind)) reason=\(reason)", category: "ios-bookmark")
+
+    switch pendingPickerKind {
+    case .file:
+      pendingInvoke?.resolve(Optional<PickResultDTO>.none)
+    case .folder:
+      pendingInvoke?.resolve(Optional<PickFolderResultDTO>.none)
+    case .export, .none:
+      pendingInvoke?.resolve()
+    }
+
     clearPendingPickState()
   }
 

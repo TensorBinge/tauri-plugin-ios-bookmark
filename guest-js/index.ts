@@ -36,20 +36,20 @@ export async function exportFile(path: string): Promise<void> {
   return invoke<void>('plugin:ios-bookmark|export_file', { path })
 }
 
-export async function pickAndBookmark(request?: PickBookmarkRequest): Promise<PickResult> {
+export async function pickAndBookmark(request?: PickBookmarkRequest): Promise<PickResult | null> {
   return request === undefined
-    ? invoke<PickResult>('plugin:ios-bookmark|pick_and_bookmark')
-    : invoke<PickResult>('plugin:ios-bookmark|pick_and_bookmark', { request })
+    ? invoke<PickResult | null>('plugin:ios-bookmark|pick_and_bookmark')
+    : invoke<PickResult | null>('plugin:ios-bookmark|pick_and_bookmark', { request })
 }
 
 export async function readByBookmark(id: string): Promise<ReadResult> {
   return invoke<ReadResult>('plugin:ios-bookmark|read_by_bookmark', { id })
 }
 
-export async function pickFolderAndBookmark(request?: PickFolderBookmarkRequest): Promise<PickFolderResult> {
+export async function pickFolderAndBookmark(request?: PickFolderBookmarkRequest): Promise<PickFolderResult | null> {
   return request === undefined
-    ? invoke<PickFolderResult>('plugin:ios-bookmark|pick_folder_and_bookmark')
-    : invoke<PickFolderResult>('plugin:ios-bookmark|pick_folder_and_bookmark', { request })
+    ? invoke<PickFolderResult | null>('plugin:ios-bookmark|pick_folder_and_bookmark')
+    : invoke<PickFolderResult | null>('plugin:ios-bookmark|pick_folder_and_bookmark', { request })
 }
 
 export async function readByFolderBookmark(id: string, targetPath: string): Promise<ReadResult> {

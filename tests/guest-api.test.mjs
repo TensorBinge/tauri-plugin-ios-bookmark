@@ -60,6 +60,14 @@ test('pickAndBookmark invokes the plugin command without a request payload by de
   ]])
 })
 
+test('pickAndBookmark returns null when the native picker is cancelled', async () => {
+  invokeResult = null
+
+  const result = await api.pickAndBookmark()
+
+  assert.equal(result, null)
+})
+
 test('pickAndBookmark forwards an explicit target-path request payload', async () => {
   invokeResult = {
     bookmarkId: 'bookmark-456',
@@ -99,6 +107,14 @@ test('pickFolderAndBookmark invokes the plugin command without a request payload
     {},
     undefined,
   ]])
+})
+
+test('pickFolderAndBookmark returns null when the native picker is cancelled', async () => {
+  invokeResult = null
+
+  const result = await api.pickFolderAndBookmark()
+
+  assert.equal(result, null)
 })
 
 test('pickFolderAndBookmark forwards an explicit target-path request payload', async () => {

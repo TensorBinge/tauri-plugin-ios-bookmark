@@ -48,7 +48,7 @@ impl<R: Runtime> IosBookmark<R> {
     pub async fn pick_and_bookmark(
         &self,
         request: Option<PickBookmarkRequest>,
-    ) -> Result<PickResult, BookmarkError> {
+    ) -> Result<Option<PickResult>, BookmarkError> {
         println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> start");
         self.0
             .run_mobile_plugin_async("pickAndBookmark", pick_and_bookmark_payload(request))
@@ -67,7 +67,7 @@ impl<R: Runtime> IosBookmark<R> {
     pub async fn pick_folder_and_bookmark(
         &self,
         request: Option<PickFolderBookmarkRequest>,
-    ) -> Result<PickFolderResult, BookmarkError> {
+    ) -> Result<Option<PickFolderResult>, BookmarkError> {
         println!("[ios-bookmark] rust mobile bridge: pickFolderAndBookmark -> start");
         self.0
             .run_mobile_plugin_async(

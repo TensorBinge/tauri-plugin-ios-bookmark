@@ -12,7 +12,7 @@ use tauri::{AppHandle, Manager, Runtime};
 pub async fn pick_and_bookmark<R: Runtime>(
     app: AppHandle<R>,
     request: Option<PickBookmarkRequest>,
-) -> Result<PickResult, BookmarkError> {
+) -> Result<Option<PickResult>, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
     bookmark.pick_and_bookmark(request).await
 }
@@ -22,7 +22,7 @@ pub async fn pick_and_bookmark<R: Runtime>(
 pub async fn pick_folder_and_bookmark<R: Runtime>(
     app: AppHandle<R>,
     request: Option<PickFolderBookmarkRequest>,
-) -> Result<PickFolderResult, BookmarkError> {
+) -> Result<Option<PickFolderResult>, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
     bookmark.pick_folder_and_bookmark(request).await
 }
