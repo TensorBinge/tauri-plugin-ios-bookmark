@@ -15,7 +15,14 @@ struct LogRecord<'a> {
     attrs: Option<Value>,
 }
 
-fn emit(level: Level, target: &str, event: &str, status: &str, error_kind: Option<&str>, attrs: Value) {
+fn emit(
+    level: Level,
+    target: &str,
+    event: &str,
+    status: &str,
+    error_kind: Option<&str>,
+    attrs: Value,
+) {
     let attrs = if attrs.is_null() { None } else { Some(attrs) };
     let message = serde_json::to_string(&LogRecord {
         event,

@@ -63,7 +63,11 @@ impl<R: Runtime> IosBookmark<R> {
                 logging::info(
                     "ios-bookmark.mobile",
                     "bookmark.pick",
-                    if result.is_some() { "success" } else { "cancelled" },
+                    if result.is_some() {
+                        "success"
+                    } else {
+                        "cancelled"
+                    },
                     json!({ "selected": result.is_some() }),
                 );
                 result
@@ -102,7 +106,11 @@ impl<R: Runtime> IosBookmark<R> {
                 logging::info(
                     "ios-bookmark.mobile",
                     "bookmark.pick_folder",
-                    if result.is_some() { "success" } else { "cancelled" },
+                    if result.is_some() {
+                        "success"
+                    } else {
+                        "cancelled"
+                    },
                     json!({ "selected": result.is_some() }),
                 );
                 result
