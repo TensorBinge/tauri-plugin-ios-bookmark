@@ -30,6 +30,7 @@ mod mobile;
 
 mod commands;
 mod error_bridge;
+mod logging;
 mod models;
 mod payloads;
 

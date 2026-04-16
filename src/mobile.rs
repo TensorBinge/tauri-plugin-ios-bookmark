@@ -4,10 +4,11 @@
 //! handle in a small Rust API so command handlers can stay platform-agnostic.
 
 use crate::{
-    models::*, normalize_ios_bookmark_error, pick_and_bookmark_payload,
+    logging, models::*, normalize_ios_bookmark_error, pick_and_bookmark_payload,
     pick_folder_and_bookmark_payload,
 };
 use serde::de::DeserializeOwned;
+use serde_json::json;
 use tauri::{
     plugin::{PluginApi, PluginHandle},
     AppHandle, Runtime,
@@ -49,17 +50,38 @@ impl<R: Runtime> IosBookmark<R> {
         &self,
         request: Option<PickBookmarkRequest>,
     ) -> Result<Option<PickResult>, BookmarkError> {
-        println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> start");
+        logging::info(
+            "ios-bookmark.mobile",
+            "bookmark.pick",
+            "start",
+            json!({ "hasRequest": request.is_some() }),
+        );
         self.0
             .run_mobile_plugin_async("pickAndBookmark", pick_and_bookmark_payload(request))
             .await
             .map(|result| {
-                println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> resolved");
+                logging::info(
+                    "ios-bookmark.mobile",
+                    "bookmark.pick",
+                    if result.is_some() {
+                        "success"
+                    } else {
+                        "cancelled"
+                    },
+                    json!({ "selected": result.is_some() }),
+                );
                 result
             })
             .map_err(|e| {
-                println!("[ios-bookmark] rust mobile bridge: pickAndBookmark -> error: {e}");
-                normalize_ios_bookmark_error(e.to_string())
+                let error = normalize_ios_bookmark_error(e.to_string());
+                logging::error(
+                    "ios-bookmark.mobile",
+                    "bookmark.pick",
+                    "failure",
+                    Some(logging::bookmark_error_kind(&error)),
+                    json!({}),
+                );
+                error
             })
     }
 
@@ -68,7 +90,12 @@ impl<R: Runtime> IosBookmark<R> {
         &self,
         request: Option<PickFolderBookmarkRequest>,
     ) -> Result<Option<PickFolderResult>, BookmarkError> {
-        println!("[ios-bookmark] rust mobile bridge: pickFolderAndBookmark -> start");
+        logging::info(
+            "ios-bookmark.mobile",
+            "bookmark.pick_folder",
+            "start",
+            json!({ "hasRequest": request.is_some() }),
+        );
         self.0
             .run_mobile_plugin_async(
                 "pickFolderAndBookmark",
@@ -76,28 +103,61 @@ impl<R: Runtime> IosBookmark<R> {
             )
             .await
             .map(|result| {
-                println!("[ios-bookmark] rust mobile bridge: pickFolderAndBookmark -> resolved");
+                logging::info(
+                    "ios-bookmark.mobile",
+                    "bookmark.pick_folder",
+                    if result.is_some() {
+                        "success"
+                    } else {
+                        "cancelled"
+                    },
+                    json!({ "selected": result.is_some() }),
+                );
                 result
             })
             .map_err(|e| {
-                println!("[ios-bookmark] rust mobile bridge: pickFolderAndBookmark -> error: {e}");
-                normalize_ios_bookmark_error(e.to_string())
+                let error = normalize_ios_bookmark_error(e.to_string());
+                logging::error(
+                    "ios-bookmark.mobile",
+                    "bookmark.pick_folder",
+                    "failure",
+                    Some(logging::bookmark_error_kind(&error)),
+                    json!({}),
+                );
+                error
             })
     }
 
     /// Reads a previously bookmarked file directly by bookmark id.
     pub async fn read_by_bookmark(&self, id: String) -> Result<ReadResult, BookmarkError> {
-        println!("[ios-bookmark] rust mobile bridge: readByBookmark({id}) -> start");
+        logging::info(
+            "ios-bookmark.mobile",
+            "bookmark.read",
+            "start",
+            json!({ "bookmarkIdPresent": !id.is_empty() }),
+        );
         self.0
             .run_mobile_plugin_async("readByBookmark", serde_json::json!({ "id": id }))
             .await
             .map(|result| {
-                println!("[ios-bookmark] rust mobile bridge: readByBookmark -> resolved");
+                logging::info(
+                    "ios-bookmark.mobile",
+                    "bookmark.read",
+                    "success",
+                    json!({ "fileName": result.file_name }),
+                );
                 result
             })
             .map_err(|e| {
-                println!("[ios-bookmark] rust mobile bridge: readByBookmark -> error: {e}");
-                normalize_ios_bookmark_error(e.to_string())
+                let error = normalize_ios_bookmark_error(e.to_string());
+                logging::error(
+                    "ios-bookmark.mobile",
+                    "bookmark.read",
+                    "failure",
+                    Some(logging::bookmark_error_kind(&error)),
+                    json!({}),
+                );
+                error
             })
     }
 
@@ -107,8 +167,11 @@ impl<R: Runtime> IosBookmark<R> {
         id: String,
         target_path: String,
     ) -> Result<ReadResult, BookmarkError> {
-        println!(
-            "[ios-bookmark] rust mobile bridge: readByFolderBookmark({id}, {target_path}) -> start"
+        logging::info(
+            "ios-bookmark.mobile",
+            "bookmark.read_folder",
+            "start",
+            json!({ "bookmarkIdPresent": !id.is_empty(), "targetFileName": std::path::Path::new(&target_path).file_name().and_then(|name| name.to_str()).unwrap_or(target_path.as_str()) }),
         );
         self.0
             .run_mobile_plugin_async(
@@ -117,44 +180,90 @@ impl<R: Runtime> IosBookmark<R> {
             )
             .await
             .map(|result| {
-                println!("[ios-bookmark] rust mobile bridge: readByFolderBookmark -> resolved");
+                logging::info(
+                    "ios-bookmark.mobile",
+                    "bookmark.read_folder",
+                    "success",
+                    json!({ "fileName": result.file_name }),
+                );
                 result
             })
             .map_err(|e| {
-                println!("[ios-bookmark] rust mobile bridge: readByFolderBookmark -> error: {e}");
-                normalize_ios_bookmark_error(e.to_string())
+                let error = normalize_ios_bookmark_error(e.to_string());
+                logging::error(
+                    "ios-bookmark.mobile",
+                    "bookmark.read_folder",
+                    "failure",
+                    Some(logging::bookmark_error_kind(&error)),
+                    json!({}),
+                );
+                error
             })
     }
 
     /// Forgets a stored bookmark so the native side can release the security-scoped grant.
     pub async fn forget_bookmark(&self, id: String) -> Result<(), BookmarkError> {
-        println!("[ios-bookmark] rust mobile bridge: forgetBookmark({id}) -> start");
+        logging::info(
+            "ios-bookmark.mobile",
+            "bookmark.forget",
+            "start",
+            json!({ "bookmarkIdPresent": !id.is_empty() }),
+        );
         self.0
             .run_mobile_plugin_async("forgetBookmark", serde_json::json!({ "id": id }))
             .await
             .map(|result| {
-                println!("[ios-bookmark] rust mobile bridge: forgetBookmark -> resolved");
+                logging::info(
+                    "ios-bookmark.mobile",
+                    "bookmark.forget",
+                    "success",
+                    json!({}),
+                );
                 result
             })
             .map_err(|e| {
-                println!("[ios-bookmark] rust mobile bridge: forgetBookmark -> error: {e}");
-                normalize_ios_bookmark_error(e.to_string())
+                let error = normalize_ios_bookmark_error(e.to_string());
+                logging::error(
+                    "ios-bookmark.mobile",
+                    "bookmark.forget",
+                    "failure",
+                    Some(logging::bookmark_error_kind(&error)),
+                    json!({}),
+                );
+                error
             })
     }
 
     /// Presents the native export picker for a file that already exists in the app sandbox.
     pub async fn export_file(&self, path: String) -> Result<(), BookmarkError> {
-        println!("[ios-bookmark] rust mobile bridge: exportFile({path}) -> start");
+        logging::info(
+            "ios-bookmark.mobile",
+            "bookmark.export_file",
+            "start",
+            json!({ "fileName": std::path::Path::new(&path).file_name().and_then(|name| name.to_str()).unwrap_or(path.as_str()) }),
+        );
         self.0
             .run_mobile_plugin_async("exportFile", serde_json::json!({ "path": path }))
             .await
             .map(|result| {
-                println!("[ios-bookmark] rust mobile bridge: exportFile -> resolved");
+                logging::info(
+                    "ios-bookmark.mobile",
+                    "bookmark.export_file",
+                    "success",
+                    json!({}),
+                );
                 result
             })
             .map_err(|e| {
-                println!("[ios-bookmark] rust mobile bridge: exportFile -> error: {e}");
-                normalize_ios_bookmark_error(e.to_string())
+                let error = normalize_ios_bookmark_error(e.to_string());
+                logging::error(
+                    "ios-bookmark.mobile",
+                    "bookmark.export_file",
+                    "failure",
+                    Some(logging::bookmark_error_kind(&error)),
+                    json!({}),
+                );
+                error
             })
     }
 
@@ -165,10 +274,11 @@ impl<R: Runtime> IosBookmark<R> {
         html: String,
         toc: Vec<ExportTocEntry>,
     ) -> Result<(), BookmarkError> {
-        println!(
-            "[ios-bookmark] rust mobile bridge: exportPdf(file_name={file_name}, html_length={}, toc_length={}) -> start",
-            html.len(),
-            toc.len()
+        logging::info(
+            "ios-bookmark.mobile",
+            "bookmark.export_pdf",
+            "start",
+            json!({ "fileName": file_name, "htmlLength": html.len(), "tocLength": toc.len() }),
         );
         self.0
             .run_mobile_plugin_async(
@@ -177,12 +287,24 @@ impl<R: Runtime> IosBookmark<R> {
             )
             .await
             .map(|result| {
-                println!("[ios-bookmark] rust mobile bridge: exportPdf -> resolved");
+                logging::info(
+                    "ios-bookmark.mobile",
+                    "bookmark.export_pdf",
+                    "success",
+                    json!({}),
+                );
                 result
             })
             .map_err(|e| {
-                println!("[ios-bookmark] rust mobile bridge: exportPdf -> error: {e}");
-                normalize_ios_bookmark_error(e.to_string())
+                let error = normalize_ios_bookmark_error(e.to_string());
+                logging::error(
+                    "ios-bookmark.mobile",
+                    "bookmark.export_pdf",
+                    "failure",
+                    Some(logging::bookmark_error_kind(&error)),
+                    json!({}),
+                );
+                error
             })
     }
 }
