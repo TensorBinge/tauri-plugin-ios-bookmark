@@ -3408,6 +3408,7 @@ dependencies = [
 name = "tauri-plugin-ios-bookmark"
 version = "0.1.2"
 dependencies = [
+ "log",
  "serde",
  "serde_json",
  "tauri",
