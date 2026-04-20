@@ -102,7 +102,11 @@ impl<R: Runtime> IosBookmark<R> {
     }
 
     /// Writes a previously bookmarked file directly by bookmark id.
-    pub async fn write_by_bookmark(&self, id: String, content: String) -> Result<(), BookmarkError> {
+    pub async fn write_by_bookmark(
+        &self,
+        id: String,
+        content: String,
+    ) -> Result<(), BookmarkError> {
         println!("[ios-bookmark] rust mobile bridge: writeByBookmark({id}) -> start");
         self.0
             .run_mobile_plugin_async(
