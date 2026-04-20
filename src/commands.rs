@@ -37,6 +37,17 @@ pub async fn read_by_bookmark<R: Runtime>(
     bookmark.read_by_bookmark(id).await
 }
 
+/// Writes text content to a file previously authorized by a direct bookmark.
+#[tauri::command]
+pub async fn write_by_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    id: String,
+    content: String,
+) -> Result<(), BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark.write_by_bookmark(id, content).await
+}
+
 /// Argument object used for the folder-bookmark read command.
 ///
 /// A named struct keeps the Tauri command boundary aligned with the camelCase
@@ -57,6 +68,18 @@ pub async fn read_by_folder_bookmark<R: Runtime>(
     let bookmark = app.state::<IosBookmark<R>>();
     bookmark
         .read_by_folder_bookmark(args.id, args.target_path)
+        .await
+}
+
+/// Writes a file within a previously authorized folder scope.
+#[tauri::command]
+pub async fn write_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: WriteByFolderBookmarkArgs,
+) -> Result<(), BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .write_by_folder_bookmark(args.id, args.target_path, args.content)
         .await
 }
 

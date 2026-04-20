@@ -46,6 +46,10 @@ export async function readByBookmark(id: string): Promise<ReadResult> {
   return invoke<ReadResult>('plugin:ios-bookmark|read_by_bookmark', { id })
 }
 
+export async function writeByBookmark(id: string, content: string): Promise<void> {
+  return invoke<void>('plugin:ios-bookmark|write_by_bookmark', { id, content })
+}
+
 export async function pickFolderAndBookmark(request?: PickFolderBookmarkRequest): Promise<PickFolderResult | null> {
   return request === undefined
     ? invoke<PickFolderResult | null>('plugin:ios-bookmark|pick_folder_and_bookmark')
@@ -54,6 +58,10 @@ export async function pickFolderAndBookmark(request?: PickFolderBookmarkRequest)
 
 export async function readByFolderBookmark(id: string, targetPath: string): Promise<ReadResult> {
   return invoke<ReadResult>('plugin:ios-bookmark|read_by_folder_bookmark', { args: { id, targetPath } })
+}
+
+export async function writeByFolderBookmark(id: string, targetPath: string, content: string): Promise<void> {
+  return invoke<void>('plugin:ios-bookmark|write_by_folder_bookmark', { args: { id, targetPath, content } })
 }
 
 export async function forgetBookmark(id: string): Promise<void> {

@@ -25,7 +25,9 @@ test('exports the guest API functions', () => {
   assert.equal(typeof api.pickAndBookmark, 'function')
   assert.equal(typeof api.pickFolderAndBookmark, 'function')
   assert.equal(typeof api.readByBookmark, 'function')
+  assert.equal(typeof api.writeByBookmark, 'function')
   assert.equal(typeof api.readByFolderBookmark, 'function')
+  assert.equal(typeof api.writeByFolderBookmark, 'function')
   assert.equal(typeof api.forgetBookmark, 'function')
 })
 
@@ -156,6 +158,35 @@ test('readByFolderBookmark forwards the folder bookmark id and target path', asy
       args: {
         id: 'folder-123',
         targetPath: '/docs/related.md',
+      },
+    },
+    undefined,
+  ]])
+})
+
+test('writeByBookmark forwards the bookmark id and updated content', async () => {
+  await api.writeByBookmark('bookmark-123', '# Updated')
+
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|write_by_bookmark',
+    {
+      id: 'bookmark-123',
+      content: '# Updated',
+    },
+    undefined,
+  ]])
+})
+
+test('writeByFolderBookmark forwards the folder bookmark id, target path, and content', async () => {
+  await api.writeByFolderBookmark('folder-123', '/docs/related.md', '# Updated')
+
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|write_by_folder_bookmark',
+    {
+      args: {
+        id: 'folder-123',
+        targetPath: '/docs/related.md',
+        content: '# Updated',
       },
     },
     undefined,

@@ -53,6 +53,14 @@ pub struct ReadResult {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct WriteByFolderBookmarkArgs {
+    pub id: String,
+    pub target_path: String,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ExportTocEntry {
     pub id: String,
     pub title: String,

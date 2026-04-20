@@ -101,6 +101,25 @@ impl<R: Runtime> IosBookmark<R> {
             })
     }
 
+    /// Writes a previously bookmarked file directly by bookmark id.
+    pub async fn write_by_bookmark(&self, id: String, content: String) -> Result<(), BookmarkError> {
+        println!("[ios-bookmark] rust mobile bridge: writeByBookmark({id}) -> start");
+        self.0
+            .run_mobile_plugin_async(
+                "writeByBookmark",
+                serde_json::json!({ "id": id, "content": content }),
+            )
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: writeByBookmark -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: writeByBookmark -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
     /// Reads a descendant file by combining a folder bookmark id with the target path.
     pub async fn read_by_folder_bookmark(
         &self,
@@ -122,6 +141,32 @@ impl<R: Runtime> IosBookmark<R> {
             })
             .map_err(|e| {
                 println!("[ios-bookmark] rust mobile bridge: readByFolderBookmark -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
+    /// Writes a descendant file by combining a folder bookmark id with the target path.
+    pub async fn write_by_folder_bookmark(
+        &self,
+        id: String,
+        target_path: String,
+        content: String,
+    ) -> Result<(), BookmarkError> {
+        println!(
+            "[ios-bookmark] rust mobile bridge: writeByFolderBookmark({id}, {target_path}) -> start"
+        );
+        self.0
+            .run_mobile_plugin_async(
+                "writeByFolderBookmark",
+                serde_json::json!({ "id": id, "targetPath": target_path, "content": content }),
+            )
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: writeByFolderBookmark -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: writeByFolderBookmark -> error: {e}");
                 normalize_ios_bookmark_error(e.to_string())
             })
     }
