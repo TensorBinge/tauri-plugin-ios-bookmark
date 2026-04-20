@@ -6,6 +6,10 @@ permissions = [
   "allow-pick-and-bookmark",
   "allow-pick-folder-and-bookmark",
   "allow-read-by-bookmark",
+  "allow-write-by-bookmark",
   "allow-read-by-folder-bookmark",
+  "allow-write-by-folder-bookmark",
   "allow-forget-bookmark",
+  "allow-export-file",
+  "allow-export-pdf",
 ]

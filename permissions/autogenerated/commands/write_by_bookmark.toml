@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-write-by-bookmark"
+description = "Enables the write_by_bookmark command without any pre-configured scope."
+commands.allow = ["write_by_bookmark"]
+
+[[permission]]
+identifier = "deny-write-by-bookmark"
+description = "Denies the write_by_bookmark command without any pre-configured scope."
+commands.deny = ["write_by_bookmark"]

@@ -295,6 +295,30 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "Enables the export_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-export-file",
+          "markdownDescription": "Enables the export_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the export_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-export-file",
+          "markdownDescription": "Denies the export_file command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the export_pdf command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-export-pdf",
+          "markdownDescription": "Enables the export_pdf command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the export_pdf command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-export-pdf",
+          "markdownDescription": "Denies the export_pdf command without any pre-configured scope."
+        },
+        {
           "description": "Enables the forget_bookmark command without any pre-configured scope.",
           "type": "string",
           "const": "allow-forget-bookmark",
@@ -355,10 +379,34 @@
           "markdownDescription": "Denies the read_by_folder_bookmark command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-forget-bookmark`",
+          "description": "Enables the write_by_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-write-by-bookmark",
+          "markdownDescription": "Enables the write_by_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the write_by_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-write-by-bookmark",
+          "markdownDescription": "Denies the write_by_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the write_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-write-by-folder-bookmark",
+          "markdownDescription": "Enables the write_by_folder_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the write_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-write-by-folder-bookmark",
+          "markdownDescription": "Denies the write_by_folder_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-write-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-write-by-folder-bookmark`\n- `allow-forget-bookmark`\n- `allow-export-file`\n- `allow-export-pdf`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-forget-bookmark`"
+          "markdownDescription": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-write-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-write-by-folder-bookmark`\n- `allow-forget-bookmark`\n- `allow-export-file`\n- `allow-export-pdf`"
         }
       ]
     }

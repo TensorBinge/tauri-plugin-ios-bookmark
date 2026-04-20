@@ -47,7 +47,7 @@ export async function readByBookmark(id: string): Promise<ReadResult> {
 }
 
 export async function writeByBookmark(id: string, content: string): Promise<void> {
-  return invoke<void>('plugin:ios-bookmark|write_by_bookmark', { id, content })
+  return invoke<void>('plugin:ios-bookmark|write_by_bookmark', { args: { id, content } })
 }
 
 export async function pickFolderAndBookmark(request?: PickFolderBookmarkRequest): Promise<PickFolderResult | null> {

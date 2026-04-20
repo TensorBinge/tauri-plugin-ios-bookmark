@@ -7,8 +7,12 @@ Default permissions for the ios-bookmark plugin.
 - `allow-pick-and-bookmark`
 - `allow-pick-folder-and-bookmark`
 - `allow-read-by-bookmark`
+- `allow-write-by-bookmark`
 - `allow-read-by-folder-bookmark`
+- `allow-write-by-folder-bookmark`
 - `allow-forget-bookmark`
+- `allow-export-file`
+- `allow-export-pdf`
 
 ## Permission Table
 
@@ -18,6 +22,58 @@ Default permissions for the ios-bookmark plugin.
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`ios-bookmark:allow-export-file`
+
+</td>
+<td>
+
+Enables the export_file command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:deny-export-file`
+
+</td>
+<td>
+
+Denies the export_file command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:allow-export-pdf`
+
+</td>
+<td>
+
+Enables the export_pdf command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:deny-export-pdf`
+
+</td>
+<td>
+
+Denies the export_pdf command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>
@@ -145,6 +201,58 @@ Enables the read_by_folder_bookmark command without any pre-configured scope.
 <td>
 
 Denies the read_by_folder_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:allow-write-by-bookmark`
+
+</td>
+<td>
+
+Enables the write_by_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:deny-write-by-bookmark`
+
+</td>
+<td>
+
+Denies the write_by_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:allow-write-by-folder-bookmark`
+
+</td>
+<td>
+
+Enables the write_by_folder_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:deny-write-by-folder-bookmark`
+
+</td>
+<td>
+
+Denies the write_by_folder_bookmark command without any pre-configured scope.
 
 </td>
 </tr>

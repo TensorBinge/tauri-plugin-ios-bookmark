@@ -5,6 +5,7 @@
 //! platform-specific work remains inside the mobile/desktop implementations.
 
 use crate::{models::*, IosBookmark};
+use serde::Deserialize;
 use tauri::{AppHandle, Manager, Runtime};
 
 /// Opens the native file picker and returns a bookmark-backed file result.
@@ -37,15 +38,21 @@ pub async fn read_by_bookmark<R: Runtime>(
     bookmark.read_by_bookmark(id).await
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WriteByBookmarkArgs {
+    pub id: String,
+    pub content: String,
+}
+
 /// Writes text content to a file previously authorized by a direct bookmark.
 #[tauri::command]
 pub async fn write_by_bookmark<R: Runtime>(
     app: AppHandle<R>,
-    id: String,
-    content: String,
+    args: WriteByBookmarkArgs,
 ) -> Result<(), BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
-    bookmark.write_by_bookmark(id, content).await
+    bookmark.write_by_bookmark(args.id, args.content).await
 }
 
 /// Argument object used for the folder-bookmark read command.

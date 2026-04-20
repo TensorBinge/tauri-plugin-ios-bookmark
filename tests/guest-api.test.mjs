@@ -170,8 +170,10 @@ test('writeByBookmark forwards the bookmark id and updated content', async () =>
   assert.deepEqual(invokeCalls, [[
     'plugin:ios-bookmark|write_by_bookmark',
     {
-      id: 'bookmark-123',
-      content: '# Updated',
+      args: {
+        id: 'bookmark-123',
+        content: '# Updated',
+      },
     },
     undefined,
   ]])
