@@ -63,6 +63,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::list_by_folder_bookmark,
             commands::create_folder_by_folder_bookmark,
             commands::create_markdown_file_by_folder_bookmark,
+            commands::rename_by_folder_bookmark,
+            commands::delete_by_folder_bookmark,
             commands::read_by_bookmark,
             commands::write_by_bookmark,
             commands::read_by_folder_bookmark,

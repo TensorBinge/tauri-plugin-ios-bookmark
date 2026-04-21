@@ -134,6 +134,37 @@ impl<R: Runtime> IosBookmark<R> {
             .map_err(|e| normalize_ios_bookmark_error(e.to_string()))
     }
 
+    /// Renames a file or folder inside a previously authorized folder bookmark scope.
+    pub async fn rename_by_folder_bookmark(
+        &self,
+        id: String,
+        target_path: String,
+        name: String,
+    ) -> Result<FolderBookmarkEntry, BookmarkError> {
+        self.0
+            .run_mobile_plugin_async(
+                "renameByFolderBookmark",
+                serde_json::json!({ "id": id, "targetPath": target_path, "name": name }),
+            )
+            .await
+            .map_err(|e| normalize_ios_bookmark_error(e.to_string()))
+    }
+
+    /// Deletes a file or folder inside a previously authorized folder bookmark scope.
+    pub async fn delete_by_folder_bookmark(
+        &self,
+        id: String,
+        target_path: String,
+    ) -> Result<(), BookmarkError> {
+        self.0
+            .run_mobile_plugin_async(
+                "deleteByFolderBookmark",
+                serde_json::json!({ "id": id, "targetPath": target_path }),
+            )
+            .await
+            .map_err(|e| normalize_ios_bookmark_error(e.to_string()))
+    }
+
     /// Reads a previously bookmarked file directly by bookmark id.
     pub async fn read_by_bookmark(&self, id: String) -> Result<ReadResult, BookmarkError> {
         println!("[ios-bookmark] rust mobile bridge: readByBookmark({id}) -> start");

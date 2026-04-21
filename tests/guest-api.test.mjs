@@ -27,6 +27,8 @@ test('exports the guest API functions', () => {
   assert.equal(typeof api.listByFolderBookmark, 'function')
   assert.equal(typeof api.createFolderByFolderBookmark, 'function')
   assert.equal(typeof api.createMarkdownFileByFolderBookmark, 'function')
+  assert.equal(typeof api.renameByFolderBookmark, 'function')
+  assert.equal(typeof api.deleteByFolderBookmark, 'function')
   assert.equal(typeof api.readByBookmark, 'function')
   assert.equal(typeof api.writeByBookmark, 'function')
   assert.equal(typeof api.readByFolderBookmark, 'function')
@@ -238,6 +240,46 @@ test('createMarkdownFileByFolderBookmark forwards the folder bookmark id, parent
         parentPath: '/docs',
         name: 'notes.md',
         content: '# Notes',
+      },
+    },
+    undefined,
+  ]])
+})
+
+test('renameByFolderBookmark forwards the folder bookmark id, target path, and next name', async () => {
+  invokeResult = {
+    name: 'ideas.md',
+    path: '/docs/ideas.md',
+    isDir: false,
+    size: 8,
+    mtime: 42,
+  }
+
+  const result = await api.renameByFolderBookmark('folder-123', '/docs/notes.md', 'ideas.md')
+
+  assert.deepEqual(result, invokeResult)
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|rename_by_folder_bookmark',
+    {
+      args: {
+        id: 'folder-123',
+        targetPath: '/docs/notes.md',
+        name: 'ideas.md',
+      },
+    },
+    undefined,
+  ]])
+})
+
+test('deleteByFolderBookmark forwards the folder bookmark id and target path', async () => {
+  await api.deleteByFolderBookmark('folder-123', '/docs/notes.md')
+
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|delete_by_folder_bookmark',
+    {
+      args: {
+        id: 'folder-123',
+        targetPath: '/docs/notes.md',
       },
     },
     undefined,

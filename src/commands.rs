@@ -85,6 +85,43 @@ pub async fn create_markdown_file_by_folder_bookmark<R: Runtime>(
         .await
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RenameByFolderBookmarkArgs {
+    pub id: String,
+    pub target_path: String,
+    pub name: String,
+}
+
+#[tauri::command]
+pub async fn rename_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: RenameByFolderBookmarkArgs,
+) -> Result<FolderBookmarkEntry, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .rename_by_folder_bookmark(args.id, args.target_path, args.name)
+        .await
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteByFolderBookmarkArgs {
+    pub id: String,
+    pub target_path: String,
+}
+
+#[tauri::command]
+pub async fn delete_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: DeleteByFolderBookmarkArgs,
+) -> Result<(), BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .delete_by_folder_bookmark(args.id, args.target_path)
+        .await
+}
+
 /// Reads the content of a file previously authorized by a direct bookmark.
 #[tauri::command]
 pub async fn read_by_bookmark<R: Runtime>(

@@ -78,6 +78,23 @@ impl<R: Runtime> IosBookmark<R> {
         Err(BookmarkError::Unsupported)
     }
 
+    pub async fn rename_by_folder_bookmark(
+        &self,
+        _id: String,
+        _target_path: String,
+        _name: String,
+    ) -> Result<FolderBookmarkEntry, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn delete_by_folder_bookmark(
+        &self,
+        _id: String,
+        _target_path: String,
+    ) -> Result<(), BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
     pub async fn write_by_folder_bookmark(
         &self,
         _id: String,

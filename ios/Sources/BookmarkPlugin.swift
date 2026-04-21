@@ -363,6 +363,49 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     }
   }
 
+  @objc public func renameByFolderBookmark(_ invoke: Invoke) {
+    Logger.info("[ios-bookmark] swift plugin: renameByFolderBookmark entered", category: "ios-bookmark")
+    struct Args: Decodable {
+      let id: String
+      let targetPath: String
+      let name: String
+    }
+
+    do {
+      let args = try invoke.parseArgs(Args.self)
+      let folderUrl = try resolveScopedFolderUrl(id: args.id)
+      defer { folderUrl.stopAccessingSecurityScopedResource() }
+      let targetUrl = try resolveScopedChildUrl(targetPath: args.targetPath, folderUrl: folderUrl)
+      let resourceValues = try targetUrl.resourceValues(forKeys: [.isDirectoryKey])
+      let sanitizedName = try sanitizeWorkspaceComponent(args.name, requireMarkdownExtension: !(resourceValues.isDirectory ?? false))
+      let entry = try coordinatedRename(url: targetUrl, name: sanitizedName, isDirectory: resourceValues.isDirectory ?? false)
+      invoke.resolve(entry)
+    } catch {
+      Logger.error("[ios-bookmark] swift plugin: renameByFolderBookmark error \(detailedErrorDescription(error))", category: "ios-bookmark")
+      invoke.reject(bookmarkRejectMessage(for: error))
+    }
+  }
+
+  @objc public func deleteByFolderBookmark(_ invoke: Invoke) {
+    Logger.info("[ios-bookmark] swift plugin: deleteByFolderBookmark entered", category: "ios-bookmark")
+    struct Args: Decodable {
+      let id: String
+      let targetPath: String
+    }
+
+    do {
+      let args = try invoke.parseArgs(Args.self)
+      let folderUrl = try resolveScopedFolderUrl(id: args.id)
+      defer { folderUrl.stopAccessingSecurityScopedResource() }
+      let targetUrl = try resolveScopedChildUrl(targetPath: args.targetPath, folderUrl: folderUrl)
+      try coordinatedDelete(url: targetUrl)
+      invoke.resolve()
+    } catch {
+      Logger.error("[ios-bookmark] swift plugin: deleteByFolderBookmark error \(detailedErrorDescription(error))", category: "ios-bookmark")
+      invoke.reject(bookmarkRejectMessage(for: error))
+    }
+  }
+
   @objc public func writeByFolderBookmark(_ invoke: Invoke) {
     Logger.info("[ios-bookmark] swift plugin: writeByFolderBookmark entered", category: "ios-bookmark")
     struct Args: Decodable {
@@ -877,6 +920,76 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     }
 
     return createdEntry
+  }
+
+  private func coordinatedRename(url: URL, name: String, isDirectory: Bool) throws -> FolderBookmarkEntryDTO {
+    var renamedEntry: FolderBookmarkEntryDTO?
+    var coordinatorError: NSError?
+    var renameError: Error?
+    let coordinator = NSFileCoordinator(filePresenter: nil)
+
+    coordinator.coordinate(writingItemAt: url, options: .forMoving, error: &coordinatorError) { movingUrl in
+      do {
+        let destinationUrl = movingUrl.deletingLastPathComponent().appendingPathComponent(name, isDirectory: isDirectory)
+
+        if movingUrl.path == destinationUrl.path {
+          renamedEntry = try makeFolderBookmarkEntry(url: movingUrl)
+          return
+        }
+
+        try FileManager.default.moveItem(at: movingUrl, to: destinationUrl)
+        renamedEntry = try makeFolderBookmarkEntry(url: destinationUrl)
+      } catch {
+        renameError = error
+      }
+    }
+
+    if let coordinatorError {
+      throw coordinatorError
+    }
+    if let renameError {
+      throw renameError
+    }
+
+    guard let renamedEntry else {
+      throw bookmarkError(.ioError, "Failed to rename item")
+    }
+
+    return renamedEntry
+  }
+
+  private func coordinatedDelete(url: URL) throws {
+    var coordinatorError: NSError?
+    var deleteError: Error?
+    let coordinator = NSFileCoordinator(filePresenter: nil)
+
+    coordinator.coordinate(writingItemAt: url, options: .forDeleting, error: &coordinatorError) { deleteUrl in
+      do {
+        try FileManager.default.removeItem(at: deleteUrl)
+      } catch {
+        deleteError = error
+      }
+    }
+
+    if let coordinatorError {
+      throw coordinatorError
+    }
+    if let deleteError {
+      throw deleteError
+    }
+  }
+
+  private func makeFolderBookmarkEntry(url: URL) throws -> FolderBookmarkEntryDTO {
+    let resourceKeys: Set<URLResourceKey> = [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey]
+    let values = try url.resourceValues(forKeys: resourceKeys)
+
+    return FolderBookmarkEntryDTO(
+      name: url.lastPathComponent,
+      path: url.path,
+      isDir: values.isDirectory ?? false,
+      size: values.fileSize.map { UInt64($0) },
+      mtime: values.contentModificationDate.map { UInt64($0.timeIntervalSince1970 * 1000) }
+    )
   }
 
   @available(iOS 14.0, *)
