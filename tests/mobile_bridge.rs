@@ -115,7 +115,8 @@ fn create_markdown_file_by_folder_bookmark_payload_uses_root_fields() {
 fn plugin_metadata_includes_rename_and_delete_commands() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let build_rs = fs::read_to_string(root.join("build.rs")).expect("read build.rs");
-    let default_permissions = fs::read_to_string(root.join("permissions/default.toml")).expect("read permissions/default.toml");
+    let default_permissions = fs::read_to_string(root.join("permissions/default.toml"))
+        .expect("read permissions/default.toml");
 
     assert!(build_rs.contains("rename_by_folder_bookmark"));
     assert!(build_rs.contains("delete_by_folder_bookmark"));
