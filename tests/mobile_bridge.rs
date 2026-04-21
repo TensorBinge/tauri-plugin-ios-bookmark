@@ -1,4 +1,6 @@
 use serde_json::json;
+use std::fs;
+use std::path::PathBuf;
 use tauri_plugin_ios_bookmark::{
     create_folder_by_folder_bookmark_payload, create_markdown_file_by_folder_bookmark_payload,
     list_by_folder_bookmark_payload, normalize_ios_bookmark_error, pick_and_bookmark_payload,
@@ -107,6 +109,18 @@ fn create_markdown_file_by_folder_bookmark_payload_uses_root_fields() {
             "content": "# Notes"
         })
     );
+}
+
+#[test]
+fn plugin_metadata_includes_rename_and_delete_commands() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let build_rs = fs::read_to_string(root.join("build.rs")).expect("read build.rs");
+    let default_permissions = fs::read_to_string(root.join("permissions/default.toml")).expect("read permissions/default.toml");
+
+    assert!(build_rs.contains("rename_by_folder_bookmark"));
+    assert!(build_rs.contains("delete_by_folder_bookmark"));
+    assert!(default_permissions.contains("allow-rename-by-folder-bookmark"));
+    assert!(default_permissions.contains("allow-delete-by-folder-bookmark"));
 }
 
 #[test]
