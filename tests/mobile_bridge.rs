@@ -78,7 +78,11 @@ fn list_by_folder_bookmark_payload_uses_root_fields() {
 #[test]
 fn create_folder_by_folder_bookmark_payload_uses_root_fields() {
     assert_eq!(
-        create_folder_by_folder_bookmark_payload("folder-123".into(), "/docs".into(), "notes".into()),
+        create_folder_by_folder_bookmark_payload(
+            "folder-123".into(),
+            "/docs".into(),
+            "notes".into()
+        ),
         json!({
             "id": "folder-123",
             "parentPath": "/docs",
