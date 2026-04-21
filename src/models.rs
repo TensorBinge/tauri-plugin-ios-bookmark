@@ -14,6 +14,8 @@ pub struct PickBookmarkRequest {
 pub struct PickFolderBookmarkRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub target_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub require_empty: Option<bool>,
 }
 
 /// Returned when the user picks a file and a bookmark is created.
@@ -53,6 +55,18 @@ pub struct ReadResult {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct FolderBookmarkEntry {
+    pub name: String,
+    pub path: String,
+    pub is_dir: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub size: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mtime: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WriteByFolderBookmarkArgs {
     pub id: String,
     pub target_path: String,
@@ -83,6 +97,8 @@ pub enum BookmarkError {
     Cancelled,
     #[error("selected file does not match requested target")]
     TargetMismatch,
+    #[error("selected folder must be empty")]
+    FolderNotEmpty,
     #[error("native error: {0}")]
     Native(String),
 }

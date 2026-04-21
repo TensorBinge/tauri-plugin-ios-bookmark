@@ -4,8 +4,9 @@
 //! handle in a small Rust API so command handlers can stay platform-agnostic.
 
 use crate::{
-    models::*, normalize_ios_bookmark_error, pick_and_bookmark_payload,
-    pick_folder_and_bookmark_payload,
+    create_folder_by_folder_bookmark_payload, create_markdown_file_by_folder_bookmark_payload,
+    list_by_folder_bookmark_payload, models::*, normalize_ios_bookmark_error,
+    pick_and_bookmark_payload, pick_folder_and_bookmark_payload,
 };
 use serde::de::DeserializeOwned;
 use tauri::{
@@ -83,6 +84,54 @@ impl<R: Runtime> IosBookmark<R> {
                 println!("[ios-bookmark] rust mobile bridge: pickFolderAndBookmark -> error: {e}");
                 normalize_ios_bookmark_error(e.to_string())
             })
+    }
+
+    /// Lists directory entries inside a previously authorized folder bookmark scope.
+    pub async fn list_by_folder_bookmark(
+        &self,
+        id: String,
+        target_path: String,
+    ) -> Result<Vec<FolderBookmarkEntry>, BookmarkError> {
+        self.0
+            .run_mobile_plugin_async(
+                "listByFolderBookmark",
+                list_by_folder_bookmark_payload(id, target_path),
+            )
+            .await
+            .map_err(|e| normalize_ios_bookmark_error(e.to_string()))
+    }
+
+    /// Creates a child folder inside a previously authorized folder bookmark scope.
+    pub async fn create_folder_by_folder_bookmark(
+        &self,
+        id: String,
+        parent_path: String,
+        name: String,
+    ) -> Result<FolderBookmarkEntry, BookmarkError> {
+        self.0
+            .run_mobile_plugin_async(
+                "createFolderByFolderBookmark",
+                create_folder_by_folder_bookmark_payload(id, parent_path, name),
+            )
+            .await
+            .map_err(|e| normalize_ios_bookmark_error(e.to_string()))
+    }
+
+    /// Creates a markdown file inside a previously authorized folder bookmark scope.
+    pub async fn create_markdown_file_by_folder_bookmark(
+        &self,
+        id: String,
+        parent_path: String,
+        name: String,
+        content: String,
+    ) -> Result<FolderBookmarkEntry, BookmarkError> {
+        self.0
+            .run_mobile_plugin_async(
+                "createMarkdownFileByFolderBookmark",
+                create_markdown_file_by_folder_bookmark_payload(id, parent_path, name, content),
+            )
+            .await
+            .map_err(|e| normalize_ios_bookmark_error(e.to_string()))
     }
 
     /// Reads a previously bookmarked file directly by bookmark id.

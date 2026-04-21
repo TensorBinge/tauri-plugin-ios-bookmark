@@ -23,6 +23,11 @@ let package = Package(
         .product(name: "Tauri", package: "Tauri")
       ],
       path: "Sources"
+    ),
+    .testTarget(
+      name: "tauri-plugin-ios-bookmarkTests",
+      dependencies: ["tauri-plugin-ios-bookmark"],
+      path: "Tests"
     )
   ]
 )

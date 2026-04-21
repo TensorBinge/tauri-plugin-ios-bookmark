@@ -295,6 +295,30 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "Enables the create_folder_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-create-folder-by-folder-bookmark",
+          "markdownDescription": "Enables the create_folder_by_folder_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_folder_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-create-folder-by-folder-bookmark",
+          "markdownDescription": "Denies the create_folder_by_folder_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_markdown_file_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-create-markdown-file-by-folder-bookmark",
+          "markdownDescription": "Enables the create_markdown_file_by_folder_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_markdown_file_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-create-markdown-file-by-folder-bookmark",
+          "markdownDescription": "Denies the create_markdown_file_by_folder_bookmark command without any pre-configured scope."
+        },
+        {
           "description": "Enables the export_file command without any pre-configured scope.",
           "type": "string",
           "const": "allow-export-file",
@@ -329,6 +353,18 @@
           "type": "string",
           "const": "deny-forget-bookmark",
           "markdownDescription": "Denies the forget_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the list_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-list-by-folder-bookmark",
+          "markdownDescription": "Enables the list_by_folder_bookmark command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the list_by_folder_bookmark command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-list-by-folder-bookmark",
+          "markdownDescription": "Denies the list_by_folder_bookmark command without any pre-configured scope."
         },
         {
           "description": "Enables the pick_and_bookmark command without any pre-configured scope.",
@@ -403,10 +439,10 @@
           "markdownDescription": "Denies the write_by_folder_bookmark command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-write-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-write-by-folder-bookmark`\n- `allow-forget-bookmark`\n- `allow-export-file`\n- `allow-export-pdf`",
+          "description": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-list-by-folder-bookmark`\n- `allow-create-folder-by-folder-bookmark`\n- `allow-create-markdown-file-by-folder-bookmark`\n- `allow-read-by-bookmark`\n- `allow-write-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-write-by-folder-bookmark`\n- `allow-forget-bookmark`\n- `allow-export-file`\n- `allow-export-pdf`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-read-by-bookmark`\n- `allow-write-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-write-by-folder-bookmark`\n- `allow-forget-bookmark`\n- `allow-export-file`\n- `allow-export-pdf`"
+          "markdownDescription": "Default permissions for the ios-bookmark plugin.\n#### This default permission set includes:\n\n- `allow-pick-and-bookmark`\n- `allow-pick-folder-and-bookmark`\n- `allow-list-by-folder-bookmark`\n- `allow-create-folder-by-folder-bookmark`\n- `allow-create-markdown-file-by-folder-bookmark`\n- `allow-read-by-bookmark`\n- `allow-write-by-bookmark`\n- `allow-read-by-folder-bookmark`\n- `allow-write-by-folder-bookmark`\n- `allow-forget-bookmark`\n- `allow-export-file`\n- `allow-export-pdf`"
         }
       ]
     }

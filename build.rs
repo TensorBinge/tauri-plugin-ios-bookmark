@@ -1,6 +1,9 @@
 const COMMANDS: &[&str] = &[
     "pick_and_bookmark",
     "pick_folder_and_bookmark",
+    "list_by_folder_bookmark",
+    "create_folder_by_folder_bookmark",
+    "create_markdown_file_by_folder_bookmark",
     "read_by_bookmark",
     "write_by_bookmark",
     "read_by_folder_bookmark",

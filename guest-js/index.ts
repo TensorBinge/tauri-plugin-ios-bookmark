@@ -7,6 +7,7 @@ export interface PickBookmarkRequest {
 
 export interface PickFolderBookmarkRequest {
   targetPath?: string
+  requireEmpty?: boolean
 }
 
 export interface PickResult {
@@ -26,6 +27,14 @@ export interface PickFolderResult {
   bookmarkId: string
   folderName: string
   folderPath: string
+}
+
+export interface FolderBookmarkEntry {
+  name: string
+  path: string
+  isDir: boolean
+  size?: number
+  mtime?: number | string
 }
 
 export async function exportPdf(fileName: string, html: string): Promise<void> {
@@ -54,6 +63,23 @@ export async function pickFolderAndBookmark(request?: PickFolderBookmarkRequest)
   return request === undefined
     ? invoke<PickFolderResult | null>('plugin:ios-bookmark|pick_folder_and_bookmark')
     : invoke<PickFolderResult | null>('plugin:ios-bookmark|pick_folder_and_bookmark', { request })
+}
+
+export async function listByFolderBookmark(id: string, targetPath: string): Promise<FolderBookmarkEntry[]> {
+  return invoke<FolderBookmarkEntry[]>('plugin:ios-bookmark|list_by_folder_bookmark', { args: { id, targetPath } })
+}
+
+export async function createFolderByFolderBookmark(id: string, parentPath: string, name: string): Promise<FolderBookmarkEntry> {
+  return invoke<FolderBookmarkEntry>('plugin:ios-bookmark|create_folder_by_folder_bookmark', { args: { id, parentPath, name } })
+}
+
+export async function createMarkdownFileByFolderBookmark(
+  id: string,
+  parentPath: string,
+  name: string,
+  content: string,
+): Promise<FolderBookmarkEntry> {
+  return invoke<FolderBookmarkEntry>('plugin:ios-bookmark|create_markdown_file_by_folder_bookmark', { args: { id, parentPath, name, content } })
 }
 
 export async function readByFolderBookmark(id: string, targetPath: string): Promise<ReadResult> {

@@ -28,6 +28,63 @@ pub async fn pick_folder_and_bookmark<R: Runtime>(
     bookmark.pick_folder_and_bookmark(request).await
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListByFolderBookmarkArgs {
+    pub id: String,
+    pub target_path: String,
+}
+
+#[tauri::command]
+pub async fn list_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: ListByFolderBookmarkArgs,
+) -> Result<Vec<FolderBookmarkEntry>, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .list_by_folder_bookmark(args.id, args.target_path)
+        .await
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateFolderByFolderBookmarkArgs {
+    pub id: String,
+    pub parent_path: String,
+    pub name: String,
+}
+
+#[tauri::command]
+pub async fn create_folder_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: CreateFolderByFolderBookmarkArgs,
+) -> Result<FolderBookmarkEntry, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .create_folder_by_folder_bookmark(args.id, args.parent_path, args.name)
+        .await
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateMarkdownFileByFolderBookmarkArgs {
+    pub id: String,
+    pub parent_path: String,
+    pub name: String,
+    pub content: String,
+}
+
+#[tauri::command]
+pub async fn create_markdown_file_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: CreateMarkdownFileByFolderBookmarkArgs,
+) -> Result<FolderBookmarkEntry, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .create_markdown_file_by_folder_bookmark(args.id, args.parent_path, args.name, args.content)
+        .await
+}
+
 /// Reads the content of a file previously authorized by a direct bookmark.
 #[tauri::command]
 pub async fn read_by_bookmark<R: Runtime>(

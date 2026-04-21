@@ -5,6 +5,9 @@ description = "Default permissions for the ios-bookmark plugin."
 permissions = [
   "allow-pick-and-bookmark",
   "allow-pick-folder-and-bookmark",
+  "allow-list-by-folder-bookmark",
+  "allow-create-folder-by-folder-bookmark",
+  "allow-create-markdown-file-by-folder-bookmark",
   "allow-read-by-bookmark",
   "allow-write-by-bookmark",
   "allow-read-by-folder-bookmark",

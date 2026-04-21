@@ -35,7 +35,10 @@ mod payloads;
 
 pub use error_bridge::normalize_ios_bookmark_error;
 pub use models::*;
-pub use payloads::{pick_and_bookmark_payload, pick_folder_and_bookmark_payload};
+pub use payloads::{
+    create_folder_by_folder_bookmark_payload, create_markdown_file_by_folder_bookmark_payload,
+    list_by_folder_bookmark_payload, pick_and_bookmark_payload, pick_folder_and_bookmark_payload,
+};
 
 #[cfg(desktop)]
 pub use desktop::IosBookmark;
@@ -57,6 +60,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         .invoke_handler(tauri::generate_handler![
             commands::pick_and_bookmark,
             commands::pick_folder_and_bookmark,
+            commands::list_by_folder_bookmark,
+            commands::create_folder_by_folder_bookmark,
+            commands::create_markdown_file_by_folder_bookmark,
             commands::read_by_bookmark,
             commands::write_by_bookmark,
             commands::read_by_folder_bookmark,

@@ -20,6 +20,7 @@ pub fn normalize_ios_bookmark_error(message: String) -> BookmarkError {
         "IO_ERROR" => BookmarkError::Io(detail),
         "CANCELLED" => BookmarkError::Cancelled,
         "TARGET_MISMATCH" => BookmarkError::TargetMismatch,
+        "FOLDER_NOT_EMPTY" => BookmarkError::FolderNotEmpty,
         "NATIVE_ERROR" => BookmarkError::Native(detail),
         _ => BookmarkError::Native(message),
     }

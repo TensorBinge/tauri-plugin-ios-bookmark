@@ -24,6 +24,9 @@ test('exports the guest API functions', () => {
   assert.equal(typeof api.exportFile, 'function')
   assert.equal(typeof api.pickAndBookmark, 'function')
   assert.equal(typeof api.pickFolderAndBookmark, 'function')
+  assert.equal(typeof api.listByFolderBookmark, 'function')
+  assert.equal(typeof api.createFolderByFolderBookmark, 'function')
+  assert.equal(typeof api.createMarkdownFileByFolderBookmark, 'function')
   assert.equal(typeof api.readByBookmark, 'function')
   assert.equal(typeof api.writeByBookmark, 'function')
   assert.equal(typeof api.readByFolderBookmark, 'function')
@@ -158,6 +161,83 @@ test('readByFolderBookmark forwards the folder bookmark id and target path', asy
       args: {
         id: 'folder-123',
         targetPath: '/docs/related.md',
+      },
+    },
+    undefined,
+  ]])
+})
+
+test('listByFolderBookmark forwards the folder bookmark id and target path', async () => {
+  invokeResult = [
+    {
+      name: 'notes',
+      path: '/docs/notes',
+      isDir: true,
+      size: 0,
+      mtime: 42,
+    },
+  ]
+
+  const result = await api.listByFolderBookmark('folder-123', '/docs')
+
+  assert.deepEqual(result, invokeResult)
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|list_by_folder_bookmark',
+    {
+      args: {
+        id: 'folder-123',
+        targetPath: '/docs',
+      },
+    },
+    undefined,
+  ]])
+})
+
+test('createFolderByFolderBookmark forwards the folder bookmark id, parent path, and name', async () => {
+  invokeResult = {
+    name: 'notes',
+    path: '/docs/notes',
+    isDir: true,
+    size: 0,
+    mtime: 42,
+  }
+
+  const result = await api.createFolderByFolderBookmark('folder-123', '/docs', 'notes')
+
+  assert.deepEqual(result, invokeResult)
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|create_folder_by_folder_bookmark',
+    {
+      args: {
+        id: 'folder-123',
+        parentPath: '/docs',
+        name: 'notes',
+      },
+    },
+    undefined,
+  ]])
+})
+
+test('createMarkdownFileByFolderBookmark forwards the folder bookmark id, parent path, file name, and content', async () => {
+  invokeResult = {
+    name: 'notes.md',
+    path: '/docs/notes.md',
+    isDir: false,
+    size: 12,
+    mtime: 42,
+  }
+
+  const result = await api.createMarkdownFileByFolderBookmark('folder-123', '/docs', 'notes.md', '# Notes')
+
+  assert.deepEqual(result, invokeResult)
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|create_markdown_file_by_folder_bookmark',
+    {
+      args: {
+        id: 'folder-123',
+        parentPath: '/docs',
+        name: 'notes.md',
+        content: '# Notes',
       },
     },
     undefined,

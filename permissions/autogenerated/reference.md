@@ -6,6 +6,9 @@ Default permissions for the ios-bookmark plugin.
 
 - `allow-pick-and-bookmark`
 - `allow-pick-folder-and-bookmark`
+- `allow-list-by-folder-bookmark`
+- `allow-create-folder-by-folder-bookmark`
+- `allow-create-markdown-file-by-folder-bookmark`
 - `allow-read-by-bookmark`
 - `allow-write-by-bookmark`
 - `allow-read-by-folder-bookmark`
@@ -22,6 +25,58 @@ Default permissions for the ios-bookmark plugin.
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`ios-bookmark:allow-create-folder-by-folder-bookmark`
+
+</td>
+<td>
+
+Enables the create_folder_by_folder_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:deny-create-folder-by-folder-bookmark`
+
+</td>
+<td>
+
+Denies the create_folder_by_folder_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:allow-create-markdown-file-by-folder-bookmark`
+
+</td>
+<td>
+
+Enables the create_markdown_file_by_folder_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:deny-create-markdown-file-by-folder-bookmark`
+
+</td>
+<td>
+
+Denies the create_markdown_file_by_folder_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>
@@ -97,6 +152,32 @@ Enables the forget_bookmark command without any pre-configured scope.
 <td>
 
 Denies the forget_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:allow-list-by-folder-bookmark`
+
+</td>
+<td>
+
+Enables the list_by_folder_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:deny-list-by-folder-bookmark`
+
+</td>
+<td>
+
+Denies the list_by_folder_bookmark command without any pre-configured scope.
 
 </td>
 </tr>
