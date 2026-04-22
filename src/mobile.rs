@@ -245,11 +245,15 @@ impl<R: Runtime> IosBookmark<R> {
             )
             .await
             .map(|result| {
-                println!("[ios-bookmark] rust mobile bridge: readBinaryByFolderBookmark -> resolved");
+                println!(
+                    "[ios-bookmark] rust mobile bridge: readBinaryByFolderBookmark -> resolved"
+                );
                 result
             })
             .map_err(|e| {
-                println!("[ios-bookmark] rust mobile bridge: readBinaryByFolderBookmark -> error: {e}");
+                println!(
+                    "[ios-bookmark] rust mobile bridge: readBinaryByFolderBookmark -> error: {e}"
+                );
                 normalize_ios_bookmark_error(e.to_string())
             })
     }
