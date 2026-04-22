@@ -134,6 +134,13 @@ struct ReadResultDTO: Encodable {
   let content: String
 }
 
+struct BinaryReadResultDTO: Encodable {
+  let fileName: String
+  let filePath: String
+  let mimeType: String
+  let base64Content: String
+}
+
 struct FolderBookmarkEntryDTO: Encodable {
   let name: String
   let path: String

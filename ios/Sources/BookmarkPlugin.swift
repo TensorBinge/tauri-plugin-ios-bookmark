@@ -298,6 +298,56 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     }
   }
 
+  @objc public func readBinaryByFolderBookmark(_ invoke: Invoke) {
+    Logger.info("[ios-bookmark] swift plugin: readBinaryByFolderBookmark entered", category: "ios-bookmark")
+    struct Args: Decodable {
+      let id: String
+      let targetPath: String
+    }
+
+    do {
+      let args = try invoke.parseArgs(Args.self)
+      guard let bookmarkData = store.getBookmarkData(id: args.id) else {
+        throw bookmarkError(.notFound, "No folder bookmark found for id: \(args.id)")
+      }
+
+      var stale = false
+      let folderUrl = try resolveSecurityScopedBookmarkUrl(bookmarkData, stale: &stale)
+
+      guard urlIsWithinFolder(targetPath: args.targetPath, folderPath: folderUrl.path) else {
+        throw bookmarkError(.permissionDenied, "Requested path is outside the bookmarked folder")
+      }
+
+      guard folderUrl.startAccessingSecurityScopedResource() else {
+        throw bookmarkError(.permissionDenied, "Failed to access security-scoped folder for id: \(args.id)")
+      }
+      defer { folderUrl.stopAccessingSecurityScopedResource() }
+
+      if stale {
+        let refreshedBookmark = try makeSecurityScopedBookmarkData(for: folderUrl)
+        let refreshedName = try? folderUrl.resourceValues(forKeys: [.nameKey]).name
+        store.updateFolder(id: args.id, bookmarkData: refreshedBookmark, folderName: refreshedName)
+      }
+
+      let targetUrl = try resolveScopedChildUrl(targetPath: args.targetPath, folderUrl: folderUrl)
+      let binaryData = try coordinatedReadData(url: targetUrl)
+      let mimeType = mimeTypeForFile(at: targetUrl)
+
+      Logger.info("[ios-bookmark] swift plugin: readBinaryByFolderBookmark resolved for \(targetUrl.lastPathComponent)", category: "ios-bookmark")
+      invoke.resolve(
+        BinaryReadResultDTO(
+          fileName: targetUrl.lastPathComponent,
+          filePath: targetUrl.path,
+          mimeType: mimeType,
+          base64Content: binaryData.base64EncodedString()
+        )
+      )
+    } catch {
+      Logger.error("[ios-bookmark] swift plugin: readBinaryByFolderBookmark error \(detailedErrorDescription(error))", category: "ios-bookmark")
+      invoke.reject(bookmarkRejectMessage(for: error))
+    }
+  }
+
   @objc public func listByFolderBookmark(_ invoke: Invoke) {
     Logger.info("[ios-bookmark] swift plugin: listByFolderBookmark entered", category: "ios-bookmark")
     struct Args: Decodable {
@@ -798,6 +848,36 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     return content
   }
 
+  private func coordinatedReadData(url: URL) throws -> Data {
+    Logger.info("[ios-bookmark] swift plugin: coordinatedReadData start for \(url.lastPathComponent)", category: "ios-bookmark")
+    var content: Data?
+    var coordinatorError: NSError?
+    var readError: Error?
+    let coordinator = NSFileCoordinator(filePresenter: nil)
+
+    coordinator.coordinate(readingItemAt: url, options: [], error: &coordinatorError) { readUrl in
+      do {
+        content = try Data(contentsOf: readUrl)
+      } catch {
+        readError = error
+      }
+    }
+
+    if let coordinatorError {
+      throw coordinatorError
+    }
+    if let readError {
+      throw readError
+    }
+    guard let content else {
+      throw bookmarkError(.ioError, "Failed to read file data")
+    }
+
+    Logger.info("[ios-bookmark] swift plugin: coordinatedReadData success for \(url.lastPathComponent)", category: "ios-bookmark")
+
+    return content
+  }
+
   private func coordinatedWrite(url: URL, content: String) throws {
     Logger.info("[ios-bookmark] swift plugin: coordinatedWrite start for \(url.lastPathComponent)", category: "ios-bookmark")
     var coordinatorError: NSError?
@@ -820,6 +900,20 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     }
 
     Logger.info("[ios-bookmark] swift plugin: coordinatedWrite success for \(url.lastPathComponent)", category: "ios-bookmark")
+  }
+
+  private func mimeTypeForFile(at url: URL) -> String {
+    if let contentType = try? url.resourceValues(forKeys: [.contentTypeKey]).contentType,
+       let mimeType = contentType.preferredMIMEType {
+      return mimeType
+    }
+
+    if let inferredType = UTType(filenameExtension: url.pathExtension),
+       let mimeType = inferredType.preferredMIMEType {
+      return mimeType
+    }
+
+    return "application/octet-stream"
   }
 
   private func coordinatedList(url: URL) throws -> [FolderBookmarkEntryDTO] {

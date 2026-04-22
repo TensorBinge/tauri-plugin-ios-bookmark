@@ -14,6 +14,7 @@ Default permissions for the ios-bookmark plugin.
 - `allow-read-by-bookmark`
 - `allow-write-by-bookmark`
 - `allow-read-by-folder-bookmark`
+- `allow-read-binary-by-folder-bookmark`
 - `allow-write-by-folder-bookmark`
 - `allow-forget-bookmark`
 - `allow-export-file`
@@ -258,6 +259,32 @@ Enables the pick_folder_and_bookmark command without any pre-configured scope.
 <td>
 
 Denies the pick_folder_and_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:allow-read-binary-by-folder-bookmark`
+
+</td>
+<td>
+
+Enables the read_binary_by_folder_bookmark command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ios-bookmark:deny-read-binary-by-folder-bookmark`
+
+</td>
+<td>
+
+Denies the read_binary_by_folder_bookmark command without any pre-configured scope.
 
 </td>
 </tr>

@@ -53,6 +53,16 @@ pub struct ReadResult {
     pub content: String,
 }
 
+/// Returned when resolving a folder bookmark and reading binary file content.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BinaryReadResult {
+    pub file_name: String,
+    pub file_path: String,
+    pub mime_type: String,
+    pub base64_content: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FolderBookmarkEntry {

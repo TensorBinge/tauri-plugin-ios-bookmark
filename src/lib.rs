@@ -68,6 +68,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::read_by_bookmark,
             commands::write_by_bookmark,
             commands::read_by_folder_bookmark,
+            commands::read_binary_by_folder_bookmark,
             commands::write_by_folder_bookmark,
             commands::export_file,
             commands::export_pdf,

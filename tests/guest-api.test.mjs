@@ -32,6 +32,7 @@ test('exports the guest API functions', () => {
   assert.equal(typeof api.readByBookmark, 'function')
   assert.equal(typeof api.writeByBookmark, 'function')
   assert.equal(typeof api.readByFolderBookmark, 'function')
+  assert.equal(typeof api.readBinaryByFolderBookmark, 'function')
   assert.equal(typeof api.writeByFolderBookmark, 'function')
   assert.equal(typeof api.forgetBookmark, 'function')
 })
@@ -163,6 +164,29 @@ test('readByFolderBookmark forwards the folder bookmark id and target path', asy
       args: {
         id: 'folder-123',
         targetPath: '/docs/related.md',
+      },
+    },
+    undefined,
+  ]])
+})
+
+test('readBinaryByFolderBookmark forwards the folder bookmark id and target path', async () => {
+  invokeResult = {
+    fileName: 'diagram.png',
+    filePath: '/docs/assets/diagram.png',
+    mimeType: 'image/png',
+    base64Content: 'ZmFrZS1pbWFnZQ==',
+  }
+
+  const result = await api.readBinaryByFolderBookmark('folder-123', '/docs/assets/diagram.png')
+
+  assert.deepEqual(result, invokeResult)
+  assert.deepEqual(invokeCalls, [[
+    'plugin:ios-bookmark|read_binary_by_folder_bookmark',
+    {
+      args: {
+        id: 'folder-123',
+        targetPath: '/docs/assets/diagram.png',
       },
     },
     undefined,

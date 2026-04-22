@@ -51,6 +51,14 @@ impl<R: Runtime> IosBookmark<R> {
         Err(BookmarkError::Unsupported)
     }
 
+    pub async fn read_binary_by_folder_bookmark(
+        &self,
+        _id: String,
+        _target_path: String,
+    ) -> Result<BinaryReadResult, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
     pub async fn list_by_folder_bookmark(
         &self,
         _id: String,

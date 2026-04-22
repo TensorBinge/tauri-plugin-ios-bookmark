@@ -172,6 +172,18 @@ pub async fn read_by_folder_bookmark<R: Runtime>(
         .await
 }
 
+/// Reads binary file content within a previously authorized folder scope.
+#[tauri::command]
+pub async fn read_binary_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: ReadByFolderBookmarkArgs,
+) -> Result<BinaryReadResult, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .read_binary_by_folder_bookmark(args.id, args.target_path)
+        .await
+}
+
 /// Writes a file within a previously authorized folder scope.
 #[tauri::command]
 pub async fn write_by_folder_bookmark<R: Runtime>(

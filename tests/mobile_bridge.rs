@@ -120,8 +120,10 @@ fn plugin_metadata_includes_rename_and_delete_commands() {
 
     assert!(build_rs.contains("rename_by_folder_bookmark"));
     assert!(build_rs.contains("delete_by_folder_bookmark"));
+    assert!(build_rs.contains("read_binary_by_folder_bookmark"));
     assert!(default_permissions.contains("allow-rename-by-folder-bookmark"));
     assert!(default_permissions.contains("allow-delete-by-folder-bookmark"));
+    assert!(default_permissions.contains("allow-read-binary-by-folder-bookmark"));
 }
 
 #[test]

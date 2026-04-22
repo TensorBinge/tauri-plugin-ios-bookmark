@@ -23,6 +23,13 @@ export interface ReadResult {
   content: string
 }
 
+export interface BinaryReadResult {
+  fileName: string
+  filePath: string
+  mimeType: string
+  base64Content: string
+}
+
 export interface PickFolderResult {
   bookmarkId: string
   folderName: string
@@ -92,6 +99,10 @@ export async function deleteByFolderBookmark(id: string, targetPath: string): Pr
 
 export async function readByFolderBookmark(id: string, targetPath: string): Promise<ReadResult> {
   return invoke<ReadResult>('plugin:ios-bookmark|read_by_folder_bookmark', { args: { id, targetPath } })
+}
+
+export async function readBinaryByFolderBookmark(id: string, targetPath: string): Promise<BinaryReadResult> {
+  return invoke<BinaryReadResult>('plugin:ios-bookmark|read_binary_by_folder_bookmark', { args: { id, targetPath } })
 }
 
 export async function writeByFolderBookmark(id: string, targetPath: string, content: string): Promise<void> {

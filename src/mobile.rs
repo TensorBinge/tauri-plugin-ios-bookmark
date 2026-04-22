@@ -229,6 +229,31 @@ impl<R: Runtime> IosBookmark<R> {
             })
     }
 
+    /// Reads a descendant binary file by combining a folder bookmark id with the target path.
+    pub async fn read_binary_by_folder_bookmark(
+        &self,
+        id: String,
+        target_path: String,
+    ) -> Result<BinaryReadResult, BookmarkError> {
+        println!(
+            "[ios-bookmark] rust mobile bridge: readBinaryByFolderBookmark({id}, {target_path}) -> start"
+        );
+        self.0
+            .run_mobile_plugin_async(
+                "readBinaryByFolderBookmark",
+                serde_json::json!({ "id": id, "targetPath": target_path }),
+            )
+            .await
+            .map(|result| {
+                println!("[ios-bookmark] rust mobile bridge: readBinaryByFolderBookmark -> resolved");
+                result
+            })
+            .map_err(|e| {
+                println!("[ios-bookmark] rust mobile bridge: readBinaryByFolderBookmark -> error: {e}");
+                normalize_ios_bookmark_error(e.to_string())
+            })
+    }
+
     /// Writes a descendant file by combining a folder bookmark id with the target path.
     pub async fn write_by_folder_bookmark(
         &self,
