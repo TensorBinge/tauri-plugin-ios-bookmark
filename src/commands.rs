@@ -120,7 +120,12 @@ pub async fn move_by_folder_bookmark<R: Runtime>(
 ) -> Result<FolderBookmarkEntry, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
     bookmark
-        .move_by_folder_bookmark(args.id, args.source_path, args.destination_parent_path, args.name)
+        .move_by_folder_bookmark(
+            args.id,
+            args.source_path,
+            args.destination_parent_path,
+            args.name,
+        )
         .await
 }
 
