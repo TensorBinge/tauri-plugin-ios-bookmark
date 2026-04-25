@@ -104,7 +104,7 @@ pub async fn rename_by_folder_bookmark<R: Runtime>(
         .await
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MoveByFolderBookmarkArgs {
     pub id: String,
