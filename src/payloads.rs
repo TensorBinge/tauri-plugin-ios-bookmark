@@ -40,6 +40,21 @@ pub fn create_folder_by_folder_bookmark_payload(
 }
 
 #[doc(hidden)]
+pub fn move_by_folder_bookmark_payload(
+    id: String,
+    source_path: String,
+    destination_parent_path: String,
+    name: String,
+) -> serde_json::Value {
+    serde_json::json!({
+        "id": id,
+        "sourcePath": source_path,
+        "destinationParentPath": destination_parent_path,
+        "name": name,
+    })
+}
+
+#[doc(hidden)]
 pub fn create_markdown_file_by_folder_bookmark_payload(
     id: String,
     parent_path: String,

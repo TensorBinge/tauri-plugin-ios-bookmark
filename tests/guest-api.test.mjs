@@ -1,5 +1,6 @@
 import test, { beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 
 import * as api from '../dist/index.js'
 
@@ -339,6 +340,12 @@ test('writeByFolderBookmark forwards the folder bookmark id, target path, and co
     },
     undefined,
   ]])
+})
+
+test('guest API exports moveByFolderBookmark', async () => {
+  const source = await readFile(new URL('../guest-js/index.ts', import.meta.url), 'utf8')
+  assert.match(source, /export async function moveByFolderBookmark\(/)
+  assert.match(source, /plugin:ios-bookmark\|move_by_folder_bookmark/)
 })
 
 test('exportFile forwards the temporary file path to the plugin command', async () => {

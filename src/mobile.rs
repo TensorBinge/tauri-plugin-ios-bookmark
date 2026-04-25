@@ -5,8 +5,8 @@
 
 use crate::{
     create_folder_by_folder_bookmark_payload, create_markdown_file_by_folder_bookmark_payload,
-    list_by_folder_bookmark_payload, models::*, normalize_ios_bookmark_error,
-    pick_and_bookmark_payload, pick_folder_and_bookmark_payload,
+    list_by_folder_bookmark_payload, move_by_folder_bookmark_payload, models::*,
+    normalize_ios_bookmark_error, pick_and_bookmark_payload, pick_folder_and_bookmark_payload,
 };
 use serde::de::DeserializeOwned;
 use tauri::{
@@ -145,6 +145,23 @@ impl<R: Runtime> IosBookmark<R> {
             .run_mobile_plugin_async(
                 "renameByFolderBookmark",
                 serde_json::json!({ "id": id, "targetPath": target_path, "name": name }),
+            )
+            .await
+            .map_err(|e| normalize_ios_bookmark_error(e.to_string()))
+    }
+
+    /// Moves a file or folder inside a previously authorized folder bookmark scope.
+    pub async fn move_by_folder_bookmark(
+        &self,
+        id: String,
+        source_path: String,
+        destination_parent_path: String,
+        name: String,
+    ) -> Result<FolderBookmarkEntry, BookmarkError> {
+        self.0
+            .run_mobile_plugin_async(
+                "moveByFolderBookmark",
+                move_by_folder_bookmark_payload(id, source_path, destination_parent_path, name),
             )
             .await
             .map_err(|e| normalize_ios_bookmark_error(e.to_string()))

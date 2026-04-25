@@ -104,6 +104,26 @@ pub async fn rename_by_folder_bookmark<R: Runtime>(
         .await
 }
 
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MoveByFolderBookmarkArgs {
+    pub id: String,
+    pub source_path: String,
+    pub destination_parent_path: String,
+    pub name: String,
+}
+
+#[tauri::command]
+pub async fn move_by_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: MoveByFolderBookmarkArgs,
+) -> Result<FolderBookmarkEntry, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    bookmark
+        .move_by_folder_bookmark(args.id, args.source_path, args.destination_parent_path, args.name)
+        .await
+}
+
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DeleteByFolderBookmarkArgs {

@@ -93,6 +93,17 @@ export async function renameByFolderBookmark(id: string, targetPath: string, nam
   return invoke<FolderBookmarkEntry>('plugin:ios-bookmark|rename_by_folder_bookmark', { args: { id, targetPath, name } })
 }
 
+export async function moveByFolderBookmark(
+  id: string,
+  sourcePath: string,
+  destinationParentPath: string,
+  name: string,
+): Promise<FolderBookmarkEntry> {
+  return invoke<FolderBookmarkEntry>('plugin:ios-bookmark|move_by_folder_bookmark', {
+    args: { id, sourcePath, destinationParentPath, name },
+  })
+}
+
 export async function deleteByFolderBookmark(id: string, targetPath: string): Promise<void> {
   return invoke<void>('plugin:ios-bookmark|delete_by_folder_bookmark', { args: { id, targetPath } })
 }

@@ -127,6 +127,35 @@ fn plugin_metadata_includes_rename_and_delete_commands() {
 }
 
 #[test]
+fn move_by_folder_bookmark_payload_uses_root_fields() {
+    assert_eq!(
+        tauri_plugin_ios_bookmark::move_by_folder_bookmark_payload(
+            "folder-123".into(),
+            "/docs/source.md".into(),
+            "/docs/archive".into(),
+            "source.md".into(),
+        ),
+        serde_json::json!({
+            "id": "folder-123",
+            "sourcePath": "/docs/source.md",
+            "destinationParentPath": "/docs/archive",
+            "name": "source.md"
+        })
+    );
+}
+
+#[test]
+fn plugin_metadata_includes_move_command() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let build_rs = std::fs::read_to_string(root.join("build.rs")).expect("read build.rs");
+    let default_permissions = std::fs::read_to_string(root.join("permissions/default.toml"))
+        .expect("read permissions/default.toml");
+
+    assert!(build_rs.contains("move_by_folder_bookmark"));
+    assert!(default_permissions.contains("allow-move-by-folder-bookmark"));
+}
+
+#[test]
 fn normalize_ios_bookmark_error_preserves_target_mismatch() {
     assert!(matches!(
         normalize_ios_bookmark_error(

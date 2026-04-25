@@ -9,6 +9,7 @@ permissions = [
   "allow-create-folder-by-folder-bookmark",
   "allow-create-markdown-file-by-folder-bookmark",
   "allow-rename-by-folder-bookmark",
+  "allow-move-by-folder-bookmark",
   "allow-delete-by-folder-bookmark",
   "allow-read-by-bookmark",
   "allow-write-by-bookmark",

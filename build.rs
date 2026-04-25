@@ -5,6 +5,7 @@ const COMMANDS: &[&str] = &[
     "create_folder_by_folder_bookmark",
     "create_markdown_file_by_folder_bookmark",
     "rename_by_folder_bookmark",
+    "move_by_folder_bookmark",
     "delete_by_folder_bookmark",
     "read_by_bookmark",
     "write_by_bookmark",
