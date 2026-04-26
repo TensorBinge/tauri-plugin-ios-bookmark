@@ -934,14 +934,16 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
   }
 
   private func mimeTypeForFile(at url: URL) -> String {
-    if let contentType = try? url.resourceValues(forKeys: [.contentTypeKey]).contentType,
-       let mimeType = contentType.preferredMIMEType {
-      return mimeType
-    }
+    if #available(iOS 14.0, *) {
+      if let contentType = try? url.resourceValues(forKeys: [.contentTypeKey]).contentType,
+         let mimeType = contentType.preferredMIMEType {
+        return mimeType
+      }
 
-    if let inferredType = UTType(filenameExtension: url.pathExtension),
-       let mimeType = inferredType.preferredMIMEType {
-      return mimeType
+      if let inferredType = UTType(filenameExtension: url.pathExtension),
+         let mimeType = inferredType.preferredMIMEType {
+        return mimeType
+      }
     }
 
     return "application/octet-stream"
