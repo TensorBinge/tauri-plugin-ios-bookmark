@@ -436,6 +436,37 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     }
   }
 
+  @objc public func moveByFolderBookmark(_ invoke: Invoke) {
+    Logger.info("[ios-bookmark] swift plugin: moveByFolderBookmark entered", category: "ios-bookmark")
+    struct Args: Decodable {
+      let id: String
+      let sourcePath: String
+      let destinationParentPath: String
+      let name: String
+    }
+
+    do {
+      let args = try invoke.parseArgs(Args.self)
+      let folderUrl = try resolveScopedFolderUrl(id: args.id)
+      defer { folderUrl.stopAccessingSecurityScopedResource() }
+      let sourceUrl = try resolveScopedChildUrl(targetPath: args.sourcePath, folderUrl: folderUrl)
+      let destinationParentUrl = try resolveScopedChildUrl(targetPath: args.destinationParentPath, folderUrl: folderUrl)
+      let sourceValues = try sourceUrl.resourceValues(forKeys: [.isDirectoryKey])
+      let isDirectory = sourceValues.isDirectory ?? false
+      let sanitizedName = try sanitizeWorkspaceComponent(args.name, requireMarkdownExtension: !isDirectory)
+      let entry = try coordinatedMove(
+        sourceUrl: sourceUrl,
+        destinationParentUrl: destinationParentUrl,
+        name: sanitizedName,
+        isDirectory: isDirectory
+      )
+      invoke.resolve(entry)
+    } catch {
+      Logger.error("[ios-bookmark] swift plugin: moveByFolderBookmark error \(detailedErrorDescription(error))", category: "ios-bookmark")
+      invoke.reject(bookmarkRejectMessage(for: error))
+    }
+  }
+
   @objc public func deleteByFolderBookmark(_ invoke: Invoke) {
     Logger.info("[ios-bookmark] swift plugin: deleteByFolderBookmark entered", category: "ios-bookmark")
     struct Args: Decodable {
@@ -1050,6 +1081,48 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
     }
 
     return renamedEntry
+  }
+
+  private func coordinatedMove(sourceUrl: URL, destinationParentUrl: URL, name: String, isDirectory: Bool) throws -> FolderBookmarkEntryDTO {
+    var movedEntry: FolderBookmarkEntryDTO?
+    var coordinatorError: NSError?
+    var moveError: Error?
+    let coordinator = NSFileCoordinator(filePresenter: nil)
+
+    coordinator.coordinate(
+      writingItemAt: sourceUrl,
+      options: .forMoving,
+      writingItemAt: destinationParentUrl,
+      options: .forMerging,
+      error: &coordinatorError
+    ) { movingUrl, destinationParentCoordinatedUrl in
+      do {
+        let destinationUrl = destinationParentCoordinatedUrl.appendingPathComponent(name, isDirectory: isDirectory)
+
+        if movingUrl.path == destinationUrl.path {
+          movedEntry = try makeFolderBookmarkEntry(url: movingUrl)
+          return
+        }
+
+        try FileManager.default.moveItem(at: movingUrl, to: destinationUrl)
+        movedEntry = try makeFolderBookmarkEntry(url: destinationUrl)
+      } catch {
+        moveError = error
+      }
+    }
+
+    if let coordinatorError {
+      throw coordinatorError
+    }
+    if let moveError {
+      throw moveError
+    }
+
+    guard let movedEntry else {
+      throw bookmarkError(.ioError, "Failed to move item")
+    }
+
+    return movedEntry
   }
 
   private func coordinatedDelete(url: URL) throws {

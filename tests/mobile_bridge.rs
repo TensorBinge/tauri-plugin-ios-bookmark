@@ -150,9 +150,12 @@ fn plugin_metadata_includes_move_command() {
     let build_rs = std::fs::read_to_string(root.join("build.rs")).expect("read build.rs");
     let default_permissions = std::fs::read_to_string(root.join("permissions/default.toml"))
         .expect("read permissions/default.toml");
+    let swift_plugin = std::fs::read_to_string(root.join("ios/Sources/BookmarkPlugin.swift"))
+        .expect("read BookmarkPlugin.swift");
 
     assert!(build_rs.contains("move_by_folder_bookmark"));
     assert!(default_permissions.contains("allow-move-by-folder-bookmark"));
+    assert!(swift_plugin.contains("@objc public func moveByFolderBookmark"));
 }
 
 #[test]
