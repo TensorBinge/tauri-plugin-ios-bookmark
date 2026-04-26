@@ -2,6 +2,8 @@
 
 iOS security-scoped bookmark plugin for Tauri 2.
 
+> Status: Beta. This plugin is under active development and APIs may change.
+
 This plugin provides a native bridge for opening files from the iOS Files app,
 creating persistent security-scoped bookmarks, reading bookmarked files later,
 and forgetting saved bookmarks.
