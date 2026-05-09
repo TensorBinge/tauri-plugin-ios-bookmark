@@ -404,7 +404,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
       let folderUrl = try resolveScopedFolderUrl(id: args.id)
       defer { folderUrl.stopAccessingSecurityScopedResource() }
       let parentUrl = try resolveScopedChildUrl(targetPath: args.parentPath, folderUrl: folderUrl)
-      let name = try sanitizeWorkspaceComponent(args.name, requireMarkdownExtension: true)
+      let name = try sanitizeWorkspaceComponent(args.name, requireMarkdownExtension: false)
       let entry = try coordinatedCreateMarkdownFile(parentUrl: parentUrl, name: name, content: args.content)
       invoke.resolve(entry)
     } catch {
@@ -427,7 +427,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
       defer { folderUrl.stopAccessingSecurityScopedResource() }
       let targetUrl = try resolveScopedChildUrl(targetPath: args.targetPath, folderUrl: folderUrl)
       let resourceValues = try targetUrl.resourceValues(forKeys: [.isDirectoryKey])
-      let sanitizedName = try sanitizeWorkspaceComponent(args.name, requireMarkdownExtension: !(resourceValues.isDirectory ?? false))
+      let sanitizedName = try sanitizeWorkspaceComponent(args.name, requireMarkdownExtension: false)
       let entry = try coordinatedRename(url: targetUrl, name: sanitizedName, isDirectory: resourceValues.isDirectory ?? false)
       invoke.resolve(entry)
     } catch {
@@ -453,7 +453,7 @@ final class BookmarkPlugin: Plugin, UIDocumentPickerDelegate, UIAdaptivePresenta
       let destinationParentUrl = try resolveScopedChildUrl(targetPath: args.destinationParentPath, folderUrl: folderUrl)
       let sourceValues = try sourceUrl.resourceValues(forKeys: [.isDirectoryKey])
       let isDirectory = sourceValues.isDirectory ?? false
-      let sanitizedName = try sanitizeWorkspaceComponent(args.name, requireMarkdownExtension: !isDirectory)
+      let sanitizedName = try sanitizeWorkspaceComponent(args.name, requireMarkdownExtension: false)
       let entry = try coordinatedMove(
         sourceUrl: sourceUrl,
         destinationParentUrl: destinationParentUrl,
