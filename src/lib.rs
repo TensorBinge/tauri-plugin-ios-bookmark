@@ -30,6 +30,7 @@ mod mobile;
 
 mod commands;
 mod error_bridge;
+mod logging;
 mod models;
 mod payloads;
 
@@ -77,6 +78,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::forget_bookmark,
         ])
         .setup(|app, api| {
+            crate::plugin_log_info!("ios-bookmark.plugin", "setup-started");
             #[cfg(mobile)]
             let bookmark = mobile::init(app, api)?;
             #[cfg(desktop)]
@@ -84,6 +86,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 
             // Expose a single managed handle so every command shares the same plugin instance.
             app.manage(bookmark);
+            crate::plugin_log_info!("ios-bookmark.plugin", "setup-succeeded");
             Ok(())
         })
         .build()

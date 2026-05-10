@@ -177,3 +177,26 @@ fn normalize_ios_bookmark_error_preserves_folder_not_empty() {
         BookmarkError::FolderNotEmpty
     ));
 }
+
+#[test]
+fn plugin_uses_shared_logging_module_and_canonical_scopes() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let lib_rs = fs::read_to_string(root.join("src/lib.rs")).expect("read src/lib.rs");
+    let commands_rs =
+        fs::read_to_string(root.join("src/commands.rs")).expect("read src/commands.rs");
+    let mobile_rs = fs::read_to_string(root.join("src/mobile.rs")).expect("read src/mobile.rs");
+    let logging_rs = fs::read_to_string(root.join("src/logging.rs")).expect("read src/logging.rs");
+
+    assert!(lib_rs.contains("mod logging;"));
+    assert!(logging_rs.contains("pub fn format_log_line"));
+    assert!(logging_rs.contains("macro_rules! plugin_log_info"));
+    assert!(logging_rs.contains("macro_rules! plugin_log_warn"));
+
+    assert!(commands_rs.contains("ios-bookmark.command"));
+    assert!(commands_rs.contains("export-file-started"));
+    assert!(commands_rs.contains("export-pdf-started"));
+
+    assert!(mobile_rs.contains("ios-bookmark.mobile"));
+    assert!(mobile_rs.contains("pick-and-bookmark-started"));
+    assert!(mobile_rs.contains("read-by-bookmark-failed"));
+}
