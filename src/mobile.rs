@@ -250,7 +250,9 @@ impl<R: Runtime> IosBookmark<R> {
         id: String,
         target_path: String,
     ) -> Result<BinaryReadResult, BookmarkError> {
-        log::info!("[ios-bookmark][mobile] readBinaryByFolderBookmark({id}, {target_path}) -> start");
+        log::info!(
+            "[ios-bookmark][mobile] readBinaryByFolderBookmark({id}, {target_path}) -> start"
+        );
         self.0
             .run_mobile_plugin_async(
                 "readBinaryByFolderBookmark",
