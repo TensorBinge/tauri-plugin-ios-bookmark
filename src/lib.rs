@@ -1,13 +1,14 @@
 //! iOS security-scoped bookmark plugin for Tauri 2.
 //!
 //! This crate exposes a Tauri plugin that bridges to native iOS code for:
-//! - presenting the Files picker
+//! - presenting the Files picker for files and folders
 //! - creating and storing security-scoped bookmarks
-//! - reading a bookmarked file later
-//! - forgetting a stored bookmark
+//! - reading and writing bookmarked files (text and binary)
+//! - listing, creating, renaming, moving, and removing items within a folder scope
+//! - validating and releasing stored bookmarks
 //!
 //! The plugin is intended for Tauri mobile apps that target iOS. On unsupported
-//! platforms, initialization falls back to an unsupported implementation.
+//! platforms, every operation returns `BookmarkError::Unsupported`.
 //!
 //! # Setup
 //!
@@ -20,8 +21,8 @@
 //!     .expect("error while running tauri application");
 //! ```
 //!
-//! Then call the guest API from JavaScript or TypeScript to pick, read, and
-//! forget bookmarked files.
+//! Then call the guest API from JavaScript or TypeScript to work with bookmarked
+//! files and folders.
 
 #[cfg(desktop)]
 mod desktop;
@@ -37,9 +38,13 @@ mod payloads;
 pub use error_bridge::normalize_ios_bookmark_error;
 pub use models::*;
 pub use payloads::{
-    create_folder_by_folder_bookmark_payload, create_markdown_file_by_folder_bookmark_payload,
-    list_by_folder_bookmark_payload, move_by_folder_bookmark_payload, pick_and_bookmark_payload,
-    pick_folder_and_bookmark_payload,
+    check_bookmark_payload, create_dir_payload, create_file_payload,
+    list_folder_bookmark_payload, move_payload, pick_file_bookmark_payload,
+    pick_folder_bookmark_payload, read_file_bookmark_data_payload,
+    read_file_bookmark_payload, read_folder_bookmark_data_payload,
+    read_folder_bookmark_payload, release_bookmark_payload, remove_payload,
+    rename_payload, write_file_bookmark_data_payload, write_file_bookmark_payload,
+    write_folder_bookmark_data_payload, write_folder_bookmark_payload,
 };
 
 #[cfg(desktop)]
@@ -60,22 +65,28 @@ use tauri::{
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("ios-bookmark")
         .invoke_handler(tauri::generate_handler![
-            commands::pick_and_bookmark,
-            commands::pick_folder_and_bookmark,
-            commands::list_by_folder_bookmark,
-            commands::create_folder_by_folder_bookmark,
-            commands::create_markdown_file_by_folder_bookmark,
-            commands::rename_by_folder_bookmark,
-            commands::move_by_folder_bookmark,
-            commands::delete_by_folder_bookmark,
-            commands::read_by_bookmark,
-            commands::write_by_bookmark,
-            commands::read_by_folder_bookmark,
-            commands::read_binary_by_folder_bookmark,
-            commands::write_by_folder_bookmark,
-            commands::export_file,
-            commands::export_pdf,
-            commands::forget_bookmark,
+            // File bookmarks
+            commands::pick_file_bookmark,
+            commands::read_file_bookmark,
+            commands::read_file_bookmark_data,
+            commands::write_file_bookmark,
+            commands::write_file_bookmark_data,
+            // Folder bookmarks
+            commands::pick_folder_bookmark,
+            commands::list_folder_bookmark,
+            commands::read_folder_bookmark,
+            commands::read_folder_bookmark_data,
+            commands::write_folder_bookmark,
+            commands::write_folder_bookmark_data,
+            // Folder-scoped mutations
+            commands::create_dir,
+            commands::create_file,
+            commands::rename,
+            commands::move_entry,
+            commands::remove,
+            // Lifecycle
+            commands::check_bookmark,
+            commands::release_bookmark,
         ])
         .setup(|app, api| {
             crate::plugin_log_info!("ios-bookmark.plugin", "setup-started");

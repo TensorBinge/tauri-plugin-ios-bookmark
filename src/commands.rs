@@ -41,411 +41,459 @@ where
     result
 }
 
-/// Opens the native file picker and returns a bookmark-backed file result.
+// ── File bookmark commands ───────────────────────────────────────────
+
+/// Opens the native file picker, creates a security-scoped bookmark, and returns
+/// the file's metadata and optional content.
 #[tauri::command]
-pub async fn pick_and_bookmark<R: Runtime>(
+pub async fn pick_file_bookmark<R: Runtime>(
     app: AppHandle<R>,
-    request: Option<PickBookmarkRequest>,
-) -> Result<Option<PickResult>, BookmarkError> {
+    request: Option<PickFileBookmarkRequest>,
+) -> Result<Option<FileBookmarkResult>, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
     let fields = [field("has_request", &request.is_some())];
     run_command_with_logging(
-        "pick-and-bookmark-started",
-        "pick-and-bookmark-succeeded",
-        "pick-and-bookmark-failed",
+        "pick-file-bookmark-started",
+        "pick-file-bookmark-succeeded",
+        "pick-file-bookmark-failed",
         &fields,
-        bookmark.pick_and_bookmark(request),
+        bookmark.pick_file_bookmark(request),
     )
     .await
 }
 
-/// Opens the native folder picker and returns a bookmark-backed folder result.
+/// Reads the text content of a file previously authorized by a file bookmark.
 #[tauri::command]
-pub async fn pick_folder_and_bookmark<R: Runtime>(
-    app: AppHandle<R>,
-    request: Option<PickFolderBookmarkRequest>,
-) -> Result<Option<PickFolderResult>, BookmarkError> {
-    let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [field("has_request", &request.is_some())];
-    run_command_with_logging(
-        "pick-folder-and-bookmark-started",
-        "pick-folder-and-bookmark-succeeded",
-        "pick-folder-and-bookmark-failed",
-        &fields,
-        bookmark.pick_folder_and_bookmark(request),
-    )
-    .await
-}
-
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ListByFolderBookmarkArgs {
-    pub id: String,
-    pub target_path: String,
-}
-
-#[tauri::command]
-pub async fn list_by_folder_bookmark<R: Runtime>(
-    app: AppHandle<R>,
-    args: ListByFolderBookmarkArgs,
-) -> Result<Vec<FolderBookmarkEntry>, BookmarkError> {
-    let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [
-        field("bookmark_id", &args.id),
-        field("target_path", &args.target_path),
-    ];
-    run_command_with_logging(
-        "list-by-folder-bookmark-started",
-        "list-by-folder-bookmark-succeeded",
-        "list-by-folder-bookmark-failed",
-        &fields,
-        bookmark.list_by_folder_bookmark(args.id, args.target_path),
-    )
-    .await
-}
-
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateFolderByFolderBookmarkArgs {
-    pub id: String,
-    pub parent_path: String,
-    pub name: String,
-}
-
-#[tauri::command]
-pub async fn create_folder_by_folder_bookmark<R: Runtime>(
-    app: AppHandle<R>,
-    args: CreateFolderByFolderBookmarkArgs,
-) -> Result<FolderBookmarkEntry, BookmarkError> {
-    let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [
-        field("bookmark_id", &args.id),
-        field("parent_path", &args.parent_path),
-        field("name", &args.name),
-    ];
-    run_command_with_logging(
-        "create-folder-by-folder-bookmark-started",
-        "create-folder-by-folder-bookmark-succeeded",
-        "create-folder-by-folder-bookmark-failed",
-        &fields,
-        bookmark.create_folder_by_folder_bookmark(args.id, args.parent_path, args.name),
-    )
-    .await
-}
-
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateMarkdownFileByFolderBookmarkArgs {
-    pub id: String,
-    pub parent_path: String,
-    pub name: String,
-    pub content: String,
-}
-
-#[tauri::command]
-pub async fn create_markdown_file_by_folder_bookmark<R: Runtime>(
-    app: AppHandle<R>,
-    args: CreateMarkdownFileByFolderBookmarkArgs,
-) -> Result<FolderBookmarkEntry, BookmarkError> {
-    let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [
-        field("bookmark_id", &args.id),
-        field("parent_path", &args.parent_path),
-        field("name", &args.name),
-        field("content_length", &args.content.len()),
-    ];
-    run_command_with_logging(
-        "create-markdown-file-by-folder-bookmark-started",
-        "create-markdown-file-by-folder-bookmark-succeeded",
-        "create-markdown-file-by-folder-bookmark-failed",
-        &fields,
-        bookmark.create_markdown_file_by_folder_bookmark(
-            args.id,
-            args.parent_path,
-            args.name,
-            args.content,
-        ),
-    )
-    .await
-}
-
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RenameByFolderBookmarkArgs {
-    pub id: String,
-    pub target_path: String,
-    pub name: String,
-}
-
-#[tauri::command]
-pub async fn rename_by_folder_bookmark<R: Runtime>(
-    app: AppHandle<R>,
-    args: RenameByFolderBookmarkArgs,
-) -> Result<FolderBookmarkEntry, BookmarkError> {
-    let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [
-        field("bookmark_id", &args.id),
-        field("target_path", &args.target_path),
-        field("name", &args.name),
-    ];
-    run_command_with_logging(
-        "rename-by-folder-bookmark-started",
-        "rename-by-folder-bookmark-succeeded",
-        "rename-by-folder-bookmark-failed",
-        &fields,
-        bookmark.rename_by_folder_bookmark(args.id, args.target_path, args.name),
-    )
-    .await
-}
-
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MoveByFolderBookmarkArgs {
-    pub id: String,
-    pub source_path: String,
-    pub destination_parent_path: String,
-    pub name: String,
-}
-
-#[tauri::command]
-pub async fn move_by_folder_bookmark<R: Runtime>(
-    app: AppHandle<R>,
-    args: MoveByFolderBookmarkArgs,
-) -> Result<FolderBookmarkEntry, BookmarkError> {
-    let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [
-        field("bookmark_id", &args.id),
-        field("source_path", &args.source_path),
-        field("destination_parent_path", &args.destination_parent_path),
-        field("name", &args.name),
-    ];
-    run_command_with_logging(
-        "move-by-folder-bookmark-started",
-        "move-by-folder-bookmark-succeeded",
-        "move-by-folder-bookmark-failed",
-        &fields,
-        bookmark.move_by_folder_bookmark(
-            args.id,
-            args.source_path,
-            args.destination_parent_path,
-            args.name,
-        ),
-    )
-    .await
-}
-
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DeleteByFolderBookmarkArgs {
-    pub id: String,
-    pub target_path: String,
-}
-
-#[tauri::command]
-pub async fn delete_by_folder_bookmark<R: Runtime>(
-    app: AppHandle<R>,
-    args: DeleteByFolderBookmarkArgs,
-) -> Result<(), BookmarkError> {
-    let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [
-        field("bookmark_id", &args.id),
-        field("target_path", &args.target_path),
-    ];
-    run_command_with_logging(
-        "delete-by-folder-bookmark-started",
-        "delete-by-folder-bookmark-succeeded",
-        "delete-by-folder-bookmark-failed",
-        &fields,
-        bookmark.delete_by_folder_bookmark(args.id, args.target_path),
-    )
-    .await
-}
-
-/// Reads the content of a file previously authorized by a direct bookmark.
-#[tauri::command]
-pub async fn read_by_bookmark<R: Runtime>(
+pub async fn read_file_bookmark<R: Runtime>(
     app: AppHandle<R>,
     id: String,
 ) -> Result<ReadResult, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [field("bookmark_id", &id)];
+    let fields = [field("id", &id)];
     run_command_with_logging(
-        "read-by-bookmark-started",
-        "read-by-bookmark-succeeded",
-        "read-by-bookmark-failed",
+        "read-file-bookmark-started",
+        "read-file-bookmark-succeeded",
+        "read-file-bookmark-failed",
         &fields,
-        bookmark.read_by_bookmark(id),
+        bookmark.read_file_bookmark(id),
     )
     .await
 }
 
+/// Reads the binary content of a file previously authorized by a file bookmark.
+#[tauri::command]
+pub async fn read_file_bookmark_data<R: Runtime>(
+    app: AppHandle<R>,
+    id: String,
+) -> Result<DataResult, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [field("id", &id)];
+    run_command_with_logging(
+        "read-file-bookmark-data-started",
+        "read-file-bookmark-data-succeeded",
+        "read-file-bookmark-data-failed",
+        &fields,
+        bookmark.read_file_bookmark_data(id),
+    )
+    .await
+}
+
+/// Argument struct for the file bookmark write command.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct WriteByBookmarkArgs {
+pub struct WriteFileBookmarkArgs {
     pub id: String,
     pub content: String,
 }
 
-/// Writes text content to a file previously authorized by a direct bookmark.
+/// Writes text content to a file previously authorized by a file bookmark.
 #[tauri::command]
-pub async fn write_by_bookmark<R: Runtime>(
+pub async fn write_file_bookmark<R: Runtime>(
     app: AppHandle<R>,
-    args: WriteByBookmarkArgs,
+    args: WriteFileBookmarkArgs,
 ) -> Result<(), BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
     let fields = [
-        field("bookmark_id", &args.id),
+        field("id", &args.id),
         field("content_length", &args.content.len()),
     ];
     run_command_with_logging(
-        "write-by-bookmark-started",
-        "write-by-bookmark-succeeded",
-        "write-by-bookmark-failed",
+        "write-file-bookmark-started",
+        "write-file-bookmark-succeeded",
+        "write-file-bookmark-failed",
         &fields,
-        bookmark.write_by_bookmark(args.id, args.content),
+        bookmark.write_file_bookmark(args.id, args.content),
     )
     .await
 }
 
-/// Argument object used for the folder-bookmark read command.
-///
-/// A named struct keeps the Tauri command boundary aligned with the camelCase
-/// payload shape expected by the generated guest API.
-#[derive(serde::Deserialize)]
+/// Argument struct for the file bookmark binary write command.
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ReadByFolderBookmarkArgs {
+pub struct WriteFileBookmarkDataArgs {
     pub id: String,
-    pub target_path: String,
+    pub data: Vec<u8>,
 }
 
-/// Reads a file within a previously authorized folder scope.
+/// Writes binary content to a file previously authorized by a file bookmark.
 #[tauri::command]
-pub async fn read_by_folder_bookmark<R: Runtime>(
+pub async fn write_file_bookmark_data<R: Runtime>(
     app: AppHandle<R>,
-    args: ReadByFolderBookmarkArgs,
+    args: WriteFileBookmarkDataArgs,
+) -> Result<(), BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [
+        field("id", &args.id),
+        field("data_length", &args.data.len()),
+    ];
+    run_command_with_logging(
+        "write-file-bookmark-data-started",
+        "write-file-bookmark-data-succeeded",
+        "write-file-bookmark-data-failed",
+        &fields,
+        bookmark.write_file_bookmark_data(args.id, args.data),
+    )
+    .await
+}
+
+// ── Folder bookmark commands ─────────────────────────────────────────
+
+/// Opens the native folder picker, creates a security-scoped bookmark, and returns
+/// the folder's metadata.
+#[tauri::command]
+pub async fn pick_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    request: Option<PickFolderBookmarkRequest>,
+) -> Result<Option<FolderBookmarkResult>, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [field("has_request", &request.is_some())];
+    run_command_with_logging(
+        "pick-folder-bookmark-started",
+        "pick-folder-bookmark-succeeded",
+        "pick-folder-bookmark-failed",
+        &fields,
+        bookmark.pick_folder_bookmark(request),
+    )
+    .await
+}
+
+/// Argument struct for folder-scoped list/read/remove operations.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FolderBookmarkPathArgs {
+    pub id: String,
+    pub path: String,
+}
+
+/// Lists directory entries within a bookmarked folder at the given path.
+#[tauri::command]
+pub async fn list_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: FolderBookmarkPathArgs,
+) -> Result<Vec<Entry>, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [field("id", &args.id), field("path", &args.path)];
+    run_command_with_logging(
+        "list-folder-bookmark-started",
+        "list-folder-bookmark-succeeded",
+        "list-folder-bookmark-failed",
+        &fields,
+        bookmark.list_folder_bookmark(args.id, args.path),
+    )
+    .await
+}
+
+/// Reads the text content of a file within a bookmarked folder scope.
+#[tauri::command]
+pub async fn read_folder_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    args: FolderBookmarkPathArgs,
 ) -> Result<ReadResult, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [
-        field("bookmark_id", &args.id),
-        field("target_path", &args.target_path),
-    ];
+    let fields = [field("id", &args.id), field("path", &args.path)];
     run_command_with_logging(
-        "read-by-folder-bookmark-started",
-        "read-by-folder-bookmark-succeeded",
-        "read-by-folder-bookmark-failed",
+        "read-folder-bookmark-started",
+        "read-folder-bookmark-succeeded",
+        "read-folder-bookmark-failed",
         &fields,
-        bookmark.read_by_folder_bookmark(args.id, args.target_path),
+        bookmark.read_folder_bookmark(args.id, args.path),
     )
     .await
 }
 
-/// Reads binary file content within a previously authorized folder scope.
+/// Reads the binary content of a file within a bookmarked folder scope.
 #[tauri::command]
-pub async fn read_binary_by_folder_bookmark<R: Runtime>(
+pub async fn read_folder_bookmark_data<R: Runtime>(
     app: AppHandle<R>,
-    args: ReadByFolderBookmarkArgs,
-) -> Result<BinaryReadResult, BookmarkError> {
+    args: FolderBookmarkPathArgs,
+) -> Result<DataResult, BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [
-        field("bookmark_id", &args.id),
-        field("target_path", &args.target_path),
-    ];
+    let fields = [field("id", &args.id), field("path", &args.path)];
     run_command_with_logging(
-        "read-binary-by-folder-bookmark-started",
-        "read-binary-by-folder-bookmark-succeeded",
-        "read-binary-by-folder-bookmark-failed",
+        "read-folder-bookmark-data-started",
+        "read-folder-bookmark-data-succeeded",
+        "read-folder-bookmark-data-failed",
         &fields,
-        bookmark.read_binary_by_folder_bookmark(args.id, args.target_path),
+        bookmark.read_folder_bookmark_data(args.id, args.path),
     )
     .await
 }
 
-/// Writes a file within a previously authorized folder scope.
+/// Argument struct for folder-scoped text writes.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WriteFolderBookmarkArgs {
+    pub id: String,
+    pub path: String,
+    pub content: String,
+}
+
+/// Writes text content to a file within a bookmarked folder scope.
 #[tauri::command]
-pub async fn write_by_folder_bookmark<R: Runtime>(
+pub async fn write_folder_bookmark<R: Runtime>(
     app: AppHandle<R>,
-    args: WriteByFolderBookmarkArgs,
+    args: WriteFolderBookmarkArgs,
 ) -> Result<(), BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
     let fields = [
-        field("bookmark_id", &args.id),
-        field("target_path", &args.target_path),
+        field("id", &args.id),
+        field("path", &args.path),
         field("content_length", &args.content.len()),
     ];
     run_command_with_logging(
-        "write-by-folder-bookmark-started",
-        "write-by-folder-bookmark-succeeded",
-        "write-by-folder-bookmark-failed",
+        "write-folder-bookmark-started",
+        "write-folder-bookmark-succeeded",
+        "write-folder-bookmark-failed",
         &fields,
-        bookmark.write_by_folder_bookmark(args.id, args.target_path, args.content),
+        bookmark.write_folder_bookmark(args.id, args.path, args.content),
     )
     .await
 }
 
-/// Forgets a stored bookmark and releases the corresponding native grant.
+/// Argument struct for folder-scoped binary writes.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WriteFolderBookmarkDataArgs {
+    pub id: String,
+    pub path: String,
+    pub data: Vec<u8>,
+}
+
+/// Writes binary content to a file within a bookmarked folder scope.
 #[tauri::command]
-pub async fn forget_bookmark<R: Runtime>(
+pub async fn write_folder_bookmark_data<R: Runtime>(
+    app: AppHandle<R>,
+    args: WriteFolderBookmarkDataArgs,
+) -> Result<(), BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [
+        field("id", &args.id),
+        field("path", &args.path),
+        field("data_length", &args.data.len()),
+    ];
+    run_command_with_logging(
+        "write-folder-bookmark-data-started",
+        "write-folder-bookmark-data-succeeded",
+        "write-folder-bookmark-data-failed",
+        &fields,
+        bookmark.write_folder_bookmark_data(args.id, args.path, args.data),
+    )
+    .await
+}
+
+// ── Folder-scoped mutation commands ──────────────────────────────────
+
+/// Argument struct for `create_dir`.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateDirArgs {
+    pub id: String,
+    pub parent_path: String,
+    pub name: String,
+}
+
+/// Creates a subdirectory within a bookmarked folder scope.
+#[tauri::command]
+pub async fn create_dir<R: Runtime>(
+    app: AppHandle<R>,
+    args: CreateDirArgs,
+) -> Result<Entry, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [
+        field("id", &args.id),
+        field("parent_path", &args.parent_path),
+        field("name", &args.name),
+    ];
+    run_command_with_logging(
+        "create-dir-started",
+        "create-dir-succeeded",
+        "create-dir-failed",
+        &fields,
+        bookmark.create_dir(args.id, args.parent_path, args.name),
+    )
+    .await
+}
+
+/// Argument struct for `create_file`.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateFileArgs {
+    pub id: String,
+    pub parent_path: String,
+    pub name: String,
+    #[serde(default)]
+    pub content: Option<String>,
+}
+
+/// Creates a new file within a bookmarked folder scope.
+#[tauri::command]
+pub async fn create_file<R: Runtime>(
+    app: AppHandle<R>,
+    args: CreateFileArgs,
+) -> Result<Entry, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let content_len = args.content.as_ref().map(|c| c.len()).unwrap_or(0);
+    let fields = [
+        field("id", &args.id),
+        field("parent_path", &args.parent_path),
+        field("name", &args.name),
+        field("content_length", &content_len),
+    ];
+    run_command_with_logging(
+        "create-file-started",
+        "create-file-succeeded",
+        "create-file-failed",
+        &fields,
+        bookmark.create_file(args.id, args.parent_path, args.name, args.content),
+    )
+    .await
+}
+
+/// Argument struct for `rename`.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RenameArgs {
+    pub id: String,
+    pub path: String,
+    pub new_name: String,
+}
+
+/// Renames a file or directory within a bookmarked folder scope.
+#[tauri::command]
+pub async fn rename<R: Runtime>(
+    app: AppHandle<R>,
+    args: RenameArgs,
+) -> Result<Entry, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [
+        field("id", &args.id),
+        field("path", &args.path),
+        field("new_name", &args.new_name),
+    ];
+    run_command_with_logging(
+        "rename-started",
+        "rename-succeeded",
+        "rename-failed",
+        &fields,
+        bookmark.rename(args.id, args.path, args.new_name),
+    )
+    .await
+}
+
+/// Argument struct for `move`.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MoveArgs {
+    pub id: String,
+    pub src_path: String,
+    pub dest_parent_path: String,
+    #[serde(default)]
+    pub name: Option<String>,
+}
+
+/// Moves a file or directory to a new parent within the same bookmarked folder scope.
+#[tauri::command]
+pub async fn move_entry<R: Runtime>(
+    app: AppHandle<R>,
+    args: MoveArgs,
+) -> Result<Entry, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [
+        field("id", &args.id),
+        field("src_path", &args.src_path),
+        field("dest_parent_path", &args.dest_parent_path),
+        field("name", &args.name),
+    ];
+    run_command_with_logging(
+        "move-started",
+        "move-succeeded",
+        "move-failed",
+        &fields,
+        bookmark.move_entry(args.id, args.src_path, args.dest_parent_path, args.name),
+    )
+    .await
+}
+
+/// Argument struct for `remove`.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoveArgs {
+    pub id: String,
+    pub path: String,
+}
+
+/// Deletes a file or directory within a bookmarked folder scope.
+#[tauri::command]
+pub async fn remove<R: Runtime>(
+    app: AppHandle<R>,
+    args: RemoveArgs,
+) -> Result<(), BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [field("id", &args.id), field("path", &args.path)];
+    run_command_with_logging(
+        "remove-started",
+        "remove-succeeded",
+        "remove-failed",
+        &fields,
+        bookmark.remove(args.id, args.path),
+    )
+    .await
+}
+
+// ── Lifecycle commands ───────────────────────────────────────────────
+
+/// Validates that a stored bookmark is still usable without performing I/O.
+#[tauri::command]
+pub async fn check_bookmark<R: Runtime>(
+    app: AppHandle<R>,
+    id: String,
+) -> Result<bool, BookmarkError> {
+    let bookmark = app.state::<IosBookmark<R>>();
+    let fields = [field("id", &id)];
+    run_command_with_logging(
+        "check-bookmark-started",
+        "check-bookmark-succeeded",
+        "check-bookmark-failed",
+        &fields,
+        bookmark.check_bookmark(id),
+    )
+    .await
+}
+
+/// Releases the native security-scoped grant and removes the bookmark from persistent storage.
+#[tauri::command]
+pub async fn release_bookmark<R: Runtime>(
     app: AppHandle<R>,
     id: String,
 ) -> Result<(), BookmarkError> {
     let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [field("bookmark_id", &id)];
+    let fields = [field("id", &id)];
     run_command_with_logging(
-        "forget-bookmark-started",
-        "forget-bookmark-succeeded",
-        "forget-bookmark-failed",
+        "release-bookmark-started",
+        "release-bookmark-succeeded",
+        "release-bookmark-failed",
         &fields,
-        bookmark.forget_bookmark(id),
-    )
-    .await
-}
-
-/// Presents the native export flow for a file that already exists in the app sandbox.
-#[tauri::command]
-pub async fn export_file<R: Runtime>(app: AppHandle<R>, path: String) -> Result<(), BookmarkError> {
-    let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [field("path", &path)];
-    run_command_with_logging(
-        "export-file-started",
-        "export-file-succeeded",
-        "export-file-failed",
-        &fields,
-        bookmark.export_file(path),
-    )
-    .await
-}
-
-/// Argument object used for the PDF export command.
-///
-/// `toc` is defaulted so older guest API versions that only send `fileName`
-/// and `html` continue to deserialize successfully.
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ExportPdfArgs {
-    pub file_name: String,
-    pub html: String,
-    #[serde(default)]
-    pub toc: Vec<ExportTocEntry>,
-}
-
-/// Renders HTML to a temporary PDF and presents the native export flow for it.
-#[tauri::command]
-pub async fn export_pdf<R: Runtime>(
-    app: AppHandle<R>,
-    args: ExportPdfArgs,
-) -> Result<(), BookmarkError> {
-    let bookmark = app.state::<IosBookmark<R>>();
-    let fields = [
-        field("file_name", &args.file_name),
-        field("html_length", &args.html.len()),
-        field("toc_length", &args.toc.len()),
-    ];
-    run_command_with_logging(
-        "export-pdf-started",
-        "export-pdf-succeeded",
-        "export-pdf-failed",
-        &fields,
-        bookmark.export_pdf(args.file_name, args.html, args.toc),
+        bookmark.release_bookmark(id),
     )
     .await
 }

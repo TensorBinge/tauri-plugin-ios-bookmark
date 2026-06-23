@@ -17,25 +17,24 @@ unsafe impl<R: Runtime> Send for IosBookmark<R> {}
 unsafe impl<R: Runtime> Sync for IosBookmark<R> {}
 
 impl<R: Runtime> IosBookmark<R> {
-    pub async fn pick_and_bookmark(
+    // ── File bookmark stubs ─────────────────────────────────────────
+
+    pub async fn pick_file_bookmark(
         &self,
-        _request: Option<PickBookmarkRequest>,
-    ) -> Result<Option<PickResult>, BookmarkError> {
+        _request: Option<PickFileBookmarkRequest>,
+    ) -> Result<Option<FileBookmarkResult>, BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 
-    pub async fn pick_folder_and_bookmark(
-        &self,
-        _request: Option<PickFolderBookmarkRequest>,
-    ) -> Result<Option<PickFolderResult>, BookmarkError> {
+    pub async fn read_file_bookmark(&self, _id: String) -> Result<ReadResult, BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 
-    pub async fn read_by_bookmark(&self, _id: String) -> Result<ReadResult, BookmarkError> {
+    pub async fn read_file_bookmark_data(&self, _id: String) -> Result<DataResult, BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 
-    pub async fn write_by_bookmark(
+    pub async fn write_file_bookmark(
         &self,
         _id: String,
         _content: String,
@@ -43,99 +42,116 @@ impl<R: Runtime> IosBookmark<R> {
         Err(BookmarkError::Unsupported)
     }
 
-    pub async fn read_by_folder_bookmark(
+    pub async fn write_file_bookmark_data(
         &self,
         _id: String,
-        _target_path: String,
+        _data: Vec<u8>,
+    ) -> Result<(), BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    // ── Folder bookmark stubs ───────────────────────────────────────
+
+    pub async fn pick_folder_bookmark(
+        &self,
+        _request: Option<PickFolderBookmarkRequest>,
+    ) -> Result<Option<FolderBookmarkResult>, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn list_folder_bookmark(
+        &self,
+        _id: String,
+        _path: String,
+    ) -> Result<Vec<Entry>, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn read_folder_bookmark(
+        &self,
+        _id: String,
+        _path: String,
     ) -> Result<ReadResult, BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 
-    pub async fn read_binary_by_folder_bookmark(
+    pub async fn read_folder_bookmark_data(
         &self,
         _id: String,
-        _target_path: String,
-    ) -> Result<BinaryReadResult, BookmarkError> {
+        _path: String,
+    ) -> Result<DataResult, BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 
-    pub async fn list_by_folder_bookmark(
+    pub async fn write_folder_bookmark(
         &self,
         _id: String,
-        _target_path: String,
-    ) -> Result<Vec<FolderBookmarkEntry>, BookmarkError> {
-        Err(BookmarkError::Unsupported)
-    }
-
-    pub async fn create_folder_by_folder_bookmark(
-        &self,
-        _id: String,
-        _parent_path: String,
-        _name: String,
-    ) -> Result<FolderBookmarkEntry, BookmarkError> {
-        Err(BookmarkError::Unsupported)
-    }
-
-    pub async fn create_markdown_file_by_folder_bookmark(
-        &self,
-        _id: String,
-        _parent_path: String,
-        _name: String,
-        _content: String,
-    ) -> Result<FolderBookmarkEntry, BookmarkError> {
-        Err(BookmarkError::Unsupported)
-    }
-
-    pub async fn rename_by_folder_bookmark(
-        &self,
-        _id: String,
-        _target_path: String,
-        _name: String,
-    ) -> Result<FolderBookmarkEntry, BookmarkError> {
-        Err(BookmarkError::Unsupported)
-    }
-
-    pub async fn move_by_folder_bookmark(
-        &self,
-        _id: String,
-        _source_path: String,
-        _destination_parent_path: String,
-        _name: String,
-    ) -> Result<FolderBookmarkEntry, BookmarkError> {
-        Err(BookmarkError::Unsupported)
-    }
-
-    pub async fn delete_by_folder_bookmark(
-        &self,
-        _id: String,
-        _target_path: String,
-    ) -> Result<(), BookmarkError> {
-        Err(BookmarkError::Unsupported)
-    }
-
-    pub async fn write_by_folder_bookmark(
-        &self,
-        _id: String,
-        _target_path: String,
+        _path: String,
         _content: String,
     ) -> Result<(), BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 
-    pub async fn forget_bookmark(&self, _id: String) -> Result<(), BookmarkError> {
-        Err(BookmarkError::Unsupported)
-    }
-
-    pub async fn export_file(&self, _path: String) -> Result<(), BookmarkError> {
-        Err(BookmarkError::Unsupported)
-    }
-
-    pub async fn export_pdf(
+    pub async fn write_folder_bookmark_data(
         &self,
-        _file_name: String,
-        _html: String,
-        _toc: Vec<ExportTocEntry>,
+        _id: String,
+        _path: String,
+        _data: Vec<u8>,
     ) -> Result<(), BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    // ── Folder-scoped mutation stubs ────────────────────────────────
+
+    pub async fn create_dir(
+        &self,
+        _id: String,
+        _parent_path: String,
+        _name: String,
+    ) -> Result<Entry, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn create_file(
+        &self,
+        _id: String,
+        _parent_path: String,
+        _name: String,
+        _content: Option<String>,
+    ) -> Result<Entry, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn rename(
+        &self,
+        _id: String,
+        _path: String,
+        _new_name: String,
+    ) -> Result<Entry, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn move_entry(
+        &self,
+        _id: String,
+        _src_path: String,
+        _dest_parent_path: String,
+        _name: Option<String>,
+    ) -> Result<Entry, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn remove(&self, _id: String, _path: String) -> Result<(), BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    // ── Lifecycle stubs ─────────────────────────────────────────────
+
+    pub async fn check_bookmark(&self, _id: String) -> Result<bool, BookmarkError> {
+        Err(BookmarkError::Unsupported)
+    }
+
+    pub async fn release_bookmark(&self, _id: String) -> Result<(), BookmarkError> {
         Err(BookmarkError::Unsupported)
     }
 }

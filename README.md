@@ -2,29 +2,16 @@
 
 iOS security-scoped bookmark plugin for Tauri 2.
 
-> Status: Beta. This plugin is under active development and APIs may change.
+> **v1.0.0** — Stable release with a general-purpose API for file and folder
+> bookmarks, folder-scoped mutations, and bookmark lifecycle management.
 
-This plugin provides a native bridge for opening files from the iOS Files app,
-creating persistent security-scoped bookmarks, reading bookmarked files later,
-and forgetting saved bookmarks.
+This plugin provides a native bridge for:
 
-This crate is intended for Tauri 2 mobile apps that target iOS. The Rust crate
-registers the native plugin, while the guest JavaScript API exposes a small
-command surface for your frontend.
-
-## Features
-
-- `pickAndBookmark`: presents `UIDocumentPickerViewController`, reads the file,
-  and returns a bookmark identifier plus file metadata
-- `readByBookmark`: resolves a previously saved bookmark and reads the file again
-- `forgetBookmark`: removes a stored bookmark
-
-## Package Layout
-
-- `src/`: Rust plugin entrypoints and mobile bridge
-- `ios/`: Swift implementation for the iOS native plugin
-- `guest-js/`: TypeScript guest API entrypoint
-- `permissions/`: default Tauri permission definitions
+- Picking files and folders through the iOS Files app
+- Creating persistent security-scoped bookmarks
+- Reading and writing bookmarked files (text and binary)
+- Listing, creating, renaming, moving, and removing items within a folder scope
+- Validating and releasing stored bookmarks
 
 ## Install
 
@@ -40,93 +27,192 @@ Install the guest JavaScript API in your frontend package:
 npm install tauri-plugin-ios-bookmark-api
 ```
 
-The guest package expects `@tauri-apps/api` from your Tauri application.
-
 ## Rust Setup
-
-Register the plugin in your Tauri builder:
 
 ```rust
 fn main() {
     tauri::Builder::default()
-    .plugin(tauri_plugin_ios_bookmark::init())
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+        .plugin(tauri_plugin_ios_bookmark::init())
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
 ```
 
 ## JavaScript Usage
 
-The guest API exposes three commands:
+### File bookmarks
 
 ```ts
 import {
-    forgetBookmark,
-    pickAndBookmark,
-    readByBookmark,
-} from 'tauri-plugin-ios-bookmark-api'
+  pickFileBookmark,
+  readFileBookmark,
+  readFileBookmarkData,
+  writeFileBookmark,
+  writeFileBookmarkData,
+} from 'tauri-plugin-ios-bookmark-api';
 
-const picked = await pickAndBookmark()
-const targetedPick = await pickAndBookmark({
-    targetPath: '/docs/related.md',
-})
+// Open the native file picker
+const picked = await pickFileBookmark({ suggestedName: '/docs/notes.md' });
+// => { id, name, path, content, mimeType? } | null
 
-console.log(picked.bookmarkId)
-console.log(picked.fileName)
-console.log(picked.filePath)
-console.log(picked.content)
+// Skip content loading for large files
+const metaOnly = await pickFileBookmark({ skipContent: true });
 
-console.log(targetedPick.bookmarkId)
+// Re-read a previously bookmarked file
+const text = await readFileBookmark(picked.id);
+// => { name, path, content }
 
-const reread = await readByBookmark(picked.bookmarkId)
-console.log(reread.fileName)
-console.log(reread.content)
+// Read binary content
+const binary = await readFileBookmarkData(picked.id);
+// => { name, path, mimeType, base64Data }
 
-await forgetBookmark(picked.bookmarkId)
+// Write text content
+await writeFileBookmark(picked.id, '# Updated content');
+
+// Write binary content
+await writeFileBookmarkData(picked.id, [0x48, 0x65, 0x6c, 0x6c, 0x6f]);
 ```
 
-`pickAndBookmark()` returns:
+### Folder bookmarks
 
 ```ts
-type PickBookmarkRequest = {
-    targetPath?: string
-    suggestedFileName?: string
-}
+import {
+  pickFolderBookmark,
+  listFolderBookmark,
+  readFolderBookmark,
+  readFolderBookmarkData,
+  writeFolderBookmark,
+  writeFolderBookmarkData,
+} from 'tauri-plugin-ios-bookmark-api';
 
-type PickResult = {
-    bookmarkId: string
-    fileName: string
-    filePath?: string
-    content: string
-}
+// Open the native folder picker
+const folder = await pickFolderBookmark();
+// => { id, name, path } | null
+
+// Require an empty folder
+const empty = await pickFolderBookmark({ requireEmpty: true });
+
+// List directory contents
+const entries = await listFolderBookmark(folder.id, '/docs');
+// => Entry[] ({ name, path, isDir, size?, mtime? })
+
+// Read a file within the folder scope
+const doc = await readFolderBookmark(folder.id, '/docs/readme.md');
+// => { name, path, content }
+
+// Read binary content within the folder scope
+const img = await readFolderBookmarkData(folder.id, '/docs/logo.png');
+// => { name, path, mimeType, base64Data }
+
+// Write to a file within the folder scope
+await writeFolderBookmark(folder.id, '/docs/notes.md', '## Notes');
 ```
 
-When `targetPath` is supplied, the plugin performs exact-file validation after the user picks a file. If the selected file does not match the requested target, the command rejects instead of creating a bookmark for the wrong file.
-
-`readByBookmark()` returns:
+### Folder-scoped mutations
 
 ```ts
-type ReadResult = {
-    fileName: string
-    content: string
-}
+import {
+  createDir,
+  createFile,
+  rename,
+  move,
+  remove,
+} from 'tauri-plugin-ios-bookmark-api';
+
+// Create a subdirectory
+const newDir = await createDir(folder.id, '/docs', 'archive');
+// => Entry
+
+// Create a new file (optional initial content)
+const newFile = await createFile(folder.id, '/docs', 'draft.md', '# Draft');
+
+// Rename an item
+await rename(folder.id, '/docs/old.md', 'new.md');
+
+// Move an item
+await move(folder.id, '/docs/draft.md', '/docs/archive');
+
+// Delete an item
+await remove(folder.id, '/tmp/scratch.md');
 ```
+
+### Lifecycle
+
+```ts
+import { checkBookmark, releaseBookmark } from 'tauri-plugin-ios-bookmark-api';
+
+// Check if a bookmark is still valid
+const ok = await checkBookmark(picked.id);
+// => boolean
+
+// Release the native grant and remove from storage
+await releaseBookmark(picked.id);
+```
+
+## Types
+
+| Type | Fields |
+|------|--------|
+| `FileBookmarkResult` | `id`, `name`, `path`, `content`, `mimeType?` |
+| `FolderBookmarkResult` | `id`, `name`, `path` |
+| `ReadResult` | `name`, `path`, `content` |
+| `DataResult` | `name`, `path`, `mimeType`, `base64Data` |
+| `Entry` | `name`, `path`, `isDir`, `size?`, `mtime?` |
+| `PickFileBookmarkRequest` | `suggestedName?`, `skipContent?` |
+| `PickFolderBookmarkRequest` | `suggestedName?`, `requireEmpty?` |
 
 ## Permissions
 
-The default permission set enables all plugin commands.
+The default permission set enables all plugin commands:
 
-Available permissions are documented in
-`permissions/autogenerated/reference.md` and include:
+```toml
+[plugins.ios-bookmark]
+permissions = ["default"]
+```
 
-- `ios-bookmark:allow-pick-and-bookmark`
-- `ios-bookmark:allow-read-by-bookmark`
-- `ios-bookmark:allow-forget-bookmark`
+Individual permissions are available for granular access control. See
+`permissions/autogenerated/reference.md` for the full list.
 
 ## Platform Notes
 
-- This plugin is iOS-only.
+- **iOS only.** All operations return `BookmarkError::Unsupported` on other platforms.
 - The file picker is backed by `UIDocumentPickerViewController`.
-- If `targetPath` is provided, the plugin uses it as best-effort picker context and enforces exact-file validation after selection.
-- Bookmarks are intended for persistent access to user-selected files.
-- On unsupported platforms, initialization returns an unsupported error path.
+- Bookmarks are stored in `UserDefaults` and persist across app launches.
+- All I/O is coordinated through `NSFileCoordinator` for safe concurrent access.
+- The plugin enforces that folder-scoped paths are always within the bookmarked folder.
+
+## Package Layout
+
+| Path            | Purpose                                 |
+| --------------- | --------------------------------------- |
+| `src/`          | Rust plugin entrypoint, commands, bridge |
+| `ios/Sources/`  | Swift native plugin implementation       |
+| `guest-js/`     | TypeScript guest API entrypoint          |
+| `permissions/`  | Tauri permission definitions             |
+
+## Breaking Changes from v0.1.x
+
+See [docs/tauri-plugin-ios-bookmark-v1-api-design.md](../../docs/tauri-plugin-ios-bookmark-v1-api-design.md)
+for a complete migration guide. Key renames:
+
+| v0.1.x | v1.0 |
+|--------|------|
+| `pickAndBookmark` | `pickFileBookmark` |
+| `pickFolderAndBookmark` | `pickFolderBookmark` |
+| `readByBookmark` | `readFileBookmark` |
+| `writeByBookmark` | `writeFileBookmark` |
+| `readByFolderBookmark` | `readFolderBookmark` |
+| `readBinaryByFolderBookmark` | `readFolderBookmarkData` |
+| `writeByFolderBookmark` | `writeFolderBookmark` |
+| `listByFolderBookmark` | `listFolderBookmark` |
+| `createFolderByFolderBookmark` | `createDir` |
+| `createMarkdownFileByFolderBookmark` | `createFile` |
+| `renameByFolderBookmark` | `rename` |
+| `moveByFolderBookmark` | `move` |
+| `deleteByFolderBookmark` | `remove` |
+| `forgetBookmark` | `releaseBookmark` |
+| `exportFile` / `exportPdf` | _removed from plugin_ |
+
+Result fields have also been renamed for consistency: `bookmarkId` → `id`,
+`fileName` → `name`, `filePath` → `path`, `folderName` → `name`,
+`folderPath` → `path`, `base64Content` → `base64Data`.
