@@ -115,33 +115,41 @@ func bookmarkRejectMessage(for error: Error) -> String {
   return "\(bookmarkNativeErrorPrefix):\(BookmarkErrorCode.nativeError.rawValue):\(detail)"
 }
 
-struct PickResultDTO: Encodable {
-  let bookmarkId: String
-  let fileName: String
-  let filePath: String
+// MARK: - DTOs
+
+/// Returned by `pickFileBookmark`.
+struct FileBookmarkResultDTO: Encodable {
+  let id: String
+  let name: String
+  let path: String
   let content: String
+  let mimeType: String?
 }
 
-struct PickFolderResultDTO: Encodable {
-  let bookmarkId: String
-  let folderName: String
-  let folderPath: String
+/// Returned by `pickFolderBookmark`.
+struct FolderBookmarkResultDTO: Encodable {
+  let id: String
+  let name: String
+  let path: String
 }
 
+/// Returned by text read operations.
 struct ReadResultDTO: Encodable {
   let fileName: String
   let filePath: String
   let content: String
 }
 
-struct BinaryReadResultDTO: Encodable {
-  let fileName: String
-  let filePath: String
+/// Returned by binary read operations.
+struct DataResultDTO: Encodable {
+  let name: String
+  let path: String
   let mimeType: String
-  let base64Content: String
+  let base64Data: String
 }
 
-struct FolderBookmarkEntryDTO: Encodable {
+/// A file or directory entry within a bookmarked folder scope.
+struct EntryDTO: Encodable {
   let name: String
   let path: String
   let isDir: Bool
